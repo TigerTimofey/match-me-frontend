@@ -8,6 +8,7 @@ const RegisterPage = () => {
   const [animateClass, setAnimateClass] = React.useState("");
   const [formData, setFormData] = React.useState({
     name: "",
+    lastname: "",
     email: "",
     password: "",
   });
@@ -22,7 +23,6 @@ const RegisterPage = () => {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
-
   const handleRegister = async () => {
     try {
       const response = await fetch(
@@ -66,7 +66,7 @@ const RegisterPage = () => {
         ),
       });
 
-      setFormData({ name: "", email: "", password: "" }); // Reset form
+      setFormData({ name: "", lastname: "", email: "", password: "" }); // Reset form
     } catch (error) {
       console.error("Error registering user:", error.message);
 
@@ -125,6 +125,14 @@ const RegisterPage = () => {
               variant="outlined"
               fullWidth
               value={formData.name}
+              onChange={handleInputChange}
+            />
+            <TextField
+              name="lastname"
+              label="Lastname"
+              variant="outlined"
+              fullWidth
+              value={formData.lastname}
               onChange={handleInputChange}
             />
             <TextField

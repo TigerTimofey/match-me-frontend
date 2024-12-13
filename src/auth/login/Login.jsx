@@ -6,10 +6,51 @@ import "animate.css";
 const LoginPage = () => {
   const [showRegister, setShowRegister] = React.useState(false);
   const [animateClass, setAnimateClass] = React.useState("");
+  const [formData, setFormData] = React.useState({ email: "", password: "" });
 
   const handleCreateAccountClick = () => {
-    setAnimateClass("animate__animated animate__zoomOut  animate__delay-0.5");
+    setAnimateClass("animate__animated animate__zoomOut animate__delay-0.5");
     setTimeout(() => setShowRegister(true), 600);
+  };
+
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleLogin = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/auth/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to login");
+      }
+
+      const result = await response.json();
+      console.log("Login successful:", result);
+
+      if (result && result.token) {
+        localStorage.setItem("jwt", result.token);
+        console.log("Stored JWT:", localStorage.getItem("jwt"));
+
+        // Display success message
+        console.log("UHUUUUU"); // Display success message
+      } else {
+        throw new Error("No JWT found in response");
+      }
+    } catch (error) {
+      console.error("Error logging in:", error.message);
+    }
   };
 
   return (
@@ -23,7 +64,7 @@ const LoginPage = () => {
       }}
     >
       {showRegister ? (
-        <div className="animate__animated animate__zoomIn  animate__delay-0.5">
+        <div className="animate__animated animate__zoomIn animate__delay-0.5">
           <Register />
         </div>
       ) : (
@@ -50,14 +91,24 @@ const LoginPage = () => {
               Login
             </Typography>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <TextField label="Email" variant="outlined" fullWidth />
               <TextField
+                name="email"
+                label="Email"
+                variant="outlined"
+                fullWidth
+                value={formData.email}
+                onChange={handleInputChange}
+              />
+              <TextField
+                name="password"
                 label="Password"
                 type="password"
                 variant="outlined"
                 fullWidth
+                value={formData.password}
+                onChange={handleInputChange}
               />
-              <Button variant="contained" fullWidth>
+              <Button variant="contained" fullWidth onClick={handleLogin}>
                 Login
               </Button>
               <Typography variant="body2" sx={{ textAlign: "center" }}>

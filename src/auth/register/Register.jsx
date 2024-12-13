@@ -23,29 +23,35 @@ const RegisterPage = () => {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
+
   const handleRegister = async () => {
     try {
-      const response = await fetch(
-        `${process.env.REACT_APP_SERVER_URL}/users`,
+      const hashedPassword = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/auth/registration`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(formData),
+          body: JSON.stringify({ ...formData }),
         }
       );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        if (errorData.message) throw new Error(errorData.message);
-        throw new Error("Failed to register user");
+      if (!hashedPassword.ok) {
+        const errorData = await hashedPassword.json();
+        throw new Error(errorData.message || "Failed to register user");
       }
 
-      const result = await response.json();
+      const result = await hashedPassword.json();
       console.log("User registered successfully:", result);
 
-      // Show success message
+      if (result && result.token) {
+        localStorage.setItem("jwt", result.token);
+        console.log("Stored JWT:", localStorage.getItem("jwt"));
+      } else {
+        throw new Error("No JWT found in response");
+      }
+
       setMessage({
         type: "success",
         text: (
@@ -66,11 +72,10 @@ const RegisterPage = () => {
         ),
       });
 
-      setFormData({ name: "", lastname: "", email: "", password: "" }); // Reset form
+      setFormData({ name: "", lastname: "", email: "", password: "" });
+      console.log("User registered:", formData);
     } catch (error) {
       console.error("Error registering user:", error.message);
-
-      // Show error message
       setMessage({ type: "error", text: error.message });
     }
   };

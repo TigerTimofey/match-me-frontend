@@ -9,8 +9,14 @@ const RegisterPage = () => {
   const [formData, setFormData] = React.useState({
     name: "",
     lastname: "",
-    email: "",
+    username: "",
     password: "",
+  });
+  const [formErrors, setFormErrors] = React.useState({
+    name: false,
+    lastname: false,
+    username: false,
+    password: false,
   });
   const [message, setMessage] = React.useState({ type: "", text: "" });
 
@@ -22,12 +28,32 @@ const RegisterPage = () => {
   const handleInputChange = (event) => {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Reset error when user inputs
+    if (value) {
+      setFormErrors((prev) => ({ ...prev, [name]: false }));
+    }
   };
 
   const handleRegister = async () => {
+    const { name, lastname, username, password } = formData;
+    const errors = {
+      name: !name,
+      lastname: !lastname,
+      username: !username,
+      password: !password,
+    };
+
+    setFormErrors(errors);
+
+    if (!name || !lastname || !username || !password) {
+      setMessage({ type: "danger", text: "All fields are required." });
+      return;
+    }
+
     try {
-      const hashedPassword = await fetch(
-        `${process.env.REACT_APP_SERVER_URL}/auth/registration`,
+      const response = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/api/auth/signup`,
         {
           method: "POST",
           headers: {
@@ -37,46 +63,42 @@ const RegisterPage = () => {
         }
       );
 
-      if (!hashedPassword.ok) {
-        const errorData = await hashedPassword.json();
-        throw new Error(errorData.message || "Failed to register user");
-      }
+      const responseText = await response.text();
 
-      const result = await hashedPassword.json();
-      console.log("User registered successfully:", result);
-
-      if (result && result.token) {
-        localStorage.setItem("jwt", result.token);
-        console.log("Stored JWT:", localStorage.getItem("jwt"));
+      if (!response.ok || responseText.startsWith("Error")) {
+        setMessage({
+          type: responseText.startsWith("Error") ? "danger" : "error",
+          text: responseText,
+        });
+        return;
+      } else if (responseText === "User registered successfully!") {
+        setMessage({
+          type: "success",
+          text: (
+            <>
+              {responseText} You can now{" "}
+              <span
+                style={{
+                  color: "#1A73E8",
+                  textDecoration: "underline",
+                  cursor: "pointer",
+                }}
+                onClick={() => setShowLogin(true)}
+              >
+                Login
+              </span>
+              .
+            </>
+          ),
+        });
       } else {
-        throw new Error("No JWT found in response");
+        setMessage({ type: "info", text: responseText });
       }
 
-      setMessage({
-        type: "success",
-        text: (
-          <>
-            Account created successfully! You can now{" "}
-            <span
-              style={{
-                color: "#1A73E8",
-                textDecoration: "underline",
-                cursor: "pointer",
-              }}
-              onClick={() => setShowLogin(true)}
-            >
-              Login
-            </span>
-            .
-          </>
-        ),
-      });
-
-      setFormData({ name: "", lastname: "", email: "", password: "" });
-      console.log("User registered:", formData);
+      setFormData({ name: "", lastname: "", username: "", password: "" });
     } catch (error) {
       console.error("Error registering user:", error.message);
-      setMessage({ type: "error", text: error.message });
+      setMessage({ type: "error", text: "An unexpected error occurred." });
     }
   };
 
@@ -117,12 +139,22 @@ const RegisterPage = () => {
           {message.text && (
             <Alert
               severity={message.type}
-              sx={{ marginBottom: 2 }}
+              sx={{
+                marginBottom: 2,
+                backgroundColor:
+                  message.type === "danger"
+                    ? "#f8d7da"
+                    : message.type === "success"
+                    ? "#a8f49d"
+                    : "transparent",
+                color: message.type === "danger" ? "#721c24" : "inherit",
+              }}
               onClose={() => setMessage({ type: "", text: "" })}
             >
               {message.text}
             </Alert>
           )}
+
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <TextField
               name="name"
@@ -131,6 +163,9 @@ const RegisterPage = () => {
               fullWidth
               value={formData.name}
               onChange={handleInputChange}
+              error={formErrors.name}
+              helperText={formErrors.name ? "Name is required" : ""}
+              required
             />
             <TextField
               name="lastname"
@@ -139,14 +174,20 @@ const RegisterPage = () => {
               fullWidth
               value={formData.lastname}
               onChange={handleInputChange}
+              error={formErrors.lastname}
+              helperText={formErrors.lastname ? "Lastname is required" : ""}
+              required
             />
             <TextField
-              name="email"
+              name="username"
               label="Email"
               variant="outlined"
               fullWidth
-              value={formData.email}
+              value={formData.username}
               onChange={handleInputChange}
+              error={formErrors.username}
+              helperText={formErrors.username ? "Email is required" : ""}
+              required
             />
             <TextField
               name="password"
@@ -156,6 +197,9 @@ const RegisterPage = () => {
               fullWidth
               value={formData.password}
               onChange={handleInputChange}
+              error={formErrors.password}
+              helperText={formErrors.password ? "Password is required" : ""}
+              required
             />
             <Button variant="contained" fullWidth onClick={handleRegister}>
               Register

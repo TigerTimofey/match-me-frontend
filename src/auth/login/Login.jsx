@@ -82,7 +82,7 @@ const LoginPage = () => {
           <Card
             sx={{
               padding: 5,
-              width: { sm: 400 },
+              width: { xs: "100%", sm: 400 },
               boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
               borderRadius: 2,
               backgroundColor: "#E3F2FD",

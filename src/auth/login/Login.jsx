@@ -82,7 +82,7 @@ const LoginPage = () => {
           <Card
             sx={{
               padding: 5,
-              width: 400,
+              width: { sm: 400 },
               boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
               borderRadius: 2,
               backgroundColor: "#E3F2FD",
@@ -118,7 +118,13 @@ const LoginPage = () => {
                 {message.text}
               </Alert>
             )}
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+              }}
+            >
               <TextField
                 name="username"
                 label="Email"

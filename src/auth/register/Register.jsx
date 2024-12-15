@@ -118,7 +118,7 @@ const RegisterPage = () => {
         <Card
           sx={{
             padding: 5,
-            width: 400,
+            width: { sm: 400 },
             boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
             borderRadius: 2,
             backgroundColor: "#E3F2FD",

@@ -1,5 +1,6 @@
 import React from "react";
-import { TextField, Button, Box, Typography, Card, Alert } from "@mui/material";
+import { Button, Box, Typography, Card, Alert } from "@mui/material";
+import FormFields from "./FormFields";
 import LoginPage from "../login/Login";
 import "animate.css";
 
@@ -29,7 +30,6 @@ const RegisterPage = () => {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Reset error when user inputs
     if (value) {
       setFormErrors((prev) => ({ ...prev, [name]: false }));
     }
@@ -154,69 +154,34 @@ const RegisterPage = () => {
               {message.text}
             </Alert>
           )}
-
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <TextField
-              name="name"
-              label="Name"
-              variant="outlined"
-              fullWidth
-              value={formData.name}
-              onChange={handleInputChange}
-              error={formErrors.name}
-              helperText={formErrors.name ? "Name is required" : ""}
-              required
-            />
-            <TextField
-              name="lastname"
-              label="Lastname"
-              variant="outlined"
-              fullWidth
-              value={formData.lastname}
-              onChange={handleInputChange}
-              error={formErrors.lastname}
-              helperText={formErrors.lastname ? "Lastname is required" : ""}
-              required
-            />
-            <TextField
-              name="username"
-              label="Email"
-              variant="outlined"
-              fullWidth
-              value={formData.username}
-              onChange={handleInputChange}
-              error={formErrors.username}
-              helperText={formErrors.username ? "Email is required" : ""}
-              required
-            />
-            <TextField
-              name="password"
-              label="Password"
-              type="password"
-              variant="outlined"
-              fullWidth
-              value={formData.password}
-              onChange={handleInputChange}
-              error={formErrors.password}
-              helperText={formErrors.password ? "Password is required" : ""}
-              required
-            />
-            <Button variant="contained" fullWidth onClick={handleRegister}>
-              Register
-            </Button>
-            <Typography variant="body2" sx={{ textAlign: "center" }}>
-              Already have an account?{" "}
-              <span
-                onClick={handleLoginClick}
-                style={{
-                  color: "#1A73E8",
-                  cursor: "pointer",
-                }}
-              >
-                Login
-              </span>
-            </Typography>
-          </Box>
+          <FormFields
+            formData={formData}
+            handleInputChange={handleInputChange}
+            formErrors={formErrors}
+          />
+          <Button
+            variant="contained"
+            sx={{ textAlign: "center", marginTop: "20px" }}
+            fullWidth
+            onClick={handleRegister}
+          >
+            Sign Up
+          </Button>
+          <Typography
+            variant="body2"
+            sx={{ textAlign: "center", marginTop: "20px" }}
+          >
+            Already have an account?{" "}
+            <span
+              onClick={handleLoginClick}
+              style={{
+                color: "#1A73E8",
+                cursor: "pointer",
+              }}
+            >
+              Login
+            </span>
+          </Typography>
         </Card>
       </div>
     </Box>

@@ -1,12 +1,20 @@
 import React from "react";
-import { TextField, Button, Box, Typography, Card } from "@mui/material";
-import Register from "../register/Register";
+import { TextField, Button, Box, Typography, Card, Alert } from "@mui/material";
 import "animate.css";
+import RegisterPage from "../register/Register";
 
 const LoginPage = () => {
+  const [formData, setFormData] = React.useState({
+    username: "",
+    password: "",
+  });
+
+  const [message, setMessage] = React.useState({
+    type: "",
+    text: "",
+  });
   const [showRegister, setShowRegister] = React.useState(false);
   const [animateClass, setAnimateClass] = React.useState("");
-  const [formData, setFormData] = React.useState({ email: "", password: "" });
 
   const handleCreateAccountClick = () => {
     setAnimateClass("animate__animated animate__zoomOut animate__delay-0.5");
@@ -21,7 +29,7 @@ const LoginPage = () => {
   const handleLogin = async () => {
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_SERVER_URL}/auth/login`,
+        `${process.env.REACT_APP_SERVER_URL}/api/auth/signin`,
         {
           method: "POST",
           headers: {
@@ -33,23 +41,25 @@ const LoginPage = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to login");
+        setMessage({
+          type: "danger",
+          text: errorData.error || "Failed to login",
+        });
+        return;
       }
 
-      const result = await response.json();
-      console.log("Login successful:", result);
-
-      if (result && result.token) {
-        localStorage.setItem("jwt", result.token);
-        console.log("Stored JWT:", localStorage.getItem("jwt"));
-
-        // Display success message
-        console.log("UHUUUUU"); // Display success message
+      const token = await response.text(); // Get response as text
+      if (token) {
+        localStorage.setItem("jwt", token);
+        console.log("Login successful, JWT stored.");
+        console.log(`User ${formData.username} JWT token is `, token);
+        setMessage({ type: "success", text: "Login successful" });
       } else {
         throw new Error("No JWT found in response");
       }
     } catch (error) {
       console.error("Error logging in:", error.message);
+      setMessage({ type: "danger", text: "Wrong Email or Password" });
     }
   };
 
@@ -65,7 +75,7 @@ const LoginPage = () => {
     >
       {showRegister ? (
         <div className="animate__animated animate__zoomIn animate__delay-0.5">
-          <Register />
+          <RegisterPage />
         </div>
       ) : (
         <div className={animateClass}>
@@ -90,14 +100,33 @@ const LoginPage = () => {
             >
               Login
             </Typography>
+            {message.text && (
+              <Alert
+                severity={message.type}
+                sx={{
+                  marginBottom: 2,
+                  backgroundColor:
+                    message.type === "danger"
+                      ? "#f8d7da"
+                      : message.type === "success"
+                      ? "#a8f49d"
+                      : "transparent",
+                  color: message.type === "danger" ? "#721c24" : "inherit",
+                }}
+                onClose={() => setMessage({ type: "", text: "" })}
+              >
+                {message.text}
+              </Alert>
+            )}
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               <TextField
-                name="email"
+                name="username"
                 label="Email"
                 variant="outlined"
                 fullWidth
-                value={formData.email}
+                value={formData.username}
                 onChange={handleInputChange}
+                required
               />
               <TextField
                 name="password"
@@ -107,9 +136,10 @@ const LoginPage = () => {
                 fullWidth
                 value={formData.password}
                 onChange={handleInputChange}
+                required
               />
               <Button variant="contained" fullWidth onClick={handleLogin}>
-                Login
+                Sign In
               </Button>
               <Typography variant="body2" sx={{ textAlign: "center" }}>
                 Don't have an account?{" "}

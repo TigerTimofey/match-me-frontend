@@ -2,6 +2,7 @@ import React from "react";
 import { TextField, Button, Box, Typography, Card, Alert } from "@mui/material";
 import "animate.css";
 import RegisterPage from "../register/Register";
+import UserBio from "./user-bio/UserBio";
 
 const LoginPage = () => {
   const [formData, setFormData] = React.useState({
@@ -13,8 +14,11 @@ const LoginPage = () => {
     type: "",
     text: "",
   });
+
   const [showRegister, setShowRegister] = React.useState(false);
+  const [showBio, setShowBio] = React.useState(false);
   const [animateClass, setAnimateClass] = React.useState("");
+  const [token, setToken] = React.useState("");
 
   const handleCreateAccountClick = () => {
     setAnimateClass("animate__animated animate__zoomOut animate__delay-0.5");
@@ -58,11 +62,13 @@ const LoginPage = () => {
       }
 
       const token = await response.text(); // Get response as text
+      setToken(token);
       if (token) {
         localStorage.setItem("jwt", token);
         console.log("Login successful, JWT stored.");
         console.log(`User ${formData.username} JWT token is `, token);
         setMessage({ type: "success", text: "Login successful" });
+        setShowBio(true);
       } else {
         throw new Error("No JWT found in response");
       }
@@ -88,6 +94,10 @@ const LoginPage = () => {
       {showRegister ? (
         <div className="animate__animated animate__zoomIn animate__delay-0.5">
           <RegisterPage />
+        </div>
+      ) : showBio ? (
+        <div className="animate__animated animate__zoomIn animate__delay-0.5">
+          <UserBio token={token} />
         </div>
       ) : (
         <div className={animateClass}>

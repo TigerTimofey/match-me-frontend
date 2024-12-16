@@ -1,13 +1,17 @@
 import "./App.css";
 import Login from "./auth/login/Login";
-// import Register from "./register/Register";
+import MainComponent from "./pages/MainComponent";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 
 function App() {
   return (
     <div className="App">
-      {/* <Register /> */}
-
-      <Login />
+      <Router>
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/me" element={<MainComponent />} />
+        </Routes>
+      </Router>
     </div>
   );
 }

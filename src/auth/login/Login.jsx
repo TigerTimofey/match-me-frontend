@@ -27,6 +27,15 @@ const LoginPage = () => {
   };
 
   const handleLogin = async () => {
+    // Validate input
+    if (!formData.username || !formData.password) {
+      setMessage({
+        type: "danger",
+        text: "Please fill in both email and password fields.",
+      });
+      return;
+    }
+
     try {
       const response = await fetch(
         `${process.env.REACT_APP_SERVER_URL}/api/auth/signin`,
@@ -43,7 +52,7 @@ const LoginPage = () => {
         const errorData = await response.json();
         setMessage({
           type: "danger",
-          text: errorData.error || "Failed to login",
+          text: "Incorrect login or password" || errorData.message,
         });
         return;
       }
@@ -59,7 +68,10 @@ const LoginPage = () => {
       }
     } catch (error) {
       console.error("Error logging in:", error.message);
-      setMessage({ type: "danger", text: "Wrong Email or Password" });
+      setMessage({
+        type: "danger",
+        text: "Something went wrong. Please try again.",
+      });
     }
   };
 

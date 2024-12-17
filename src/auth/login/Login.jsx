@@ -31,7 +31,6 @@ const LoginPage = () => {
   };
 
   const handleLogin = async () => {
-    // Validate input
     if (!formData.username || !formData.password) {
       setMessage({
         type: "danger",
@@ -61,13 +60,12 @@ const LoginPage = () => {
         return;
       }
 
-      const token = await response.text(); // Get response as text
-      setToken(token);
+      const token = await response.text();
       if (token) {
-        localStorage.setItem("jwt", token);
+        localStorage.clear(); // Clear old data
+        localStorage.setItem("jwt", token); // Store new JWT
+        setToken(token);
         console.log("Login successful, JWT stored.");
-        console.log(`User ${formData.username} JWT token is `, token);
-        setMessage({ type: "success", text: "Login successful" });
         setShowBio(true);
       } else {
         throw new Error("No JWT found in response");

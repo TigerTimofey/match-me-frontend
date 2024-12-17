@@ -1,18 +1,7 @@
 import React, { useState, useEffect } from "react";
-import {
-  TextField,
-  Button,
-  Box,
-  Typography,
-  Card,
-  Alert,
-  Avatar,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-} from "@mui/material";
+import { TextField, Button, Box, Typography, Card, Alert } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import UserProfile from "./UserProfile";
 
 const UserBio = ({ token }) => {
   const [formData, setFormData] = useState({
@@ -21,7 +10,6 @@ const UserBio = ({ token }) => {
     gender: "",
     languages: "",
     hobbies: "",
-    image: null,
     aboutme: "",
     lookingFor: "",
   });
@@ -31,10 +19,15 @@ const UserBio = ({ token }) => {
     text: "",
   });
 
-  const [userData, setUserData] = useState(null); // To store the fetched user data
+  const [userData, setUserData] = useState(null);
+  const [showUserProfile, setShowUserProfile] = React.useState(false);
+
   const navigate = useNavigate();
 
-  // Fetch user details
+  useEffect(() => {
+    localStorage.setItem("userBioForm", JSON.stringify(formData));
+  }, [formData]);
+
   useEffect(() => {
     const fetchUserDetails = async () => {
       try {
@@ -59,8 +52,16 @@ const UserBio = ({ token }) => {
         }
 
         const data = await response.json();
-        console.log("Fetched user data:", data); // Log the raw user data
-        setUserData(data); // Store the fetched user data
+        setUserData(data); // Save the fetched user data
+        setFormData({
+          city: data.city || "",
+          age: data.age || "",
+          gender: data.gender || "",
+          languages: data.languages?.join(", ") || "",
+          hobbies: data.hobbies?.join(", ") || "",
+          aboutme: data.aboutme || "",
+          lookingFor: data.lookingFor || "",
+        });
       } catch (error) {
         console.error("Error fetching user data:", error);
         setMessage({
@@ -73,13 +74,11 @@ const UserBio = ({ token }) => {
     fetchUserDetails();
   }, [token]);
 
-  // Handle input changes
   const handleInputChange = (event) => {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle file upload for image
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     setFormData((prev) => ({ ...prev, image: file }));
@@ -89,16 +88,13 @@ const UserBio = ({ token }) => {
     }
   };
 
-  // Submit user bio to the database
   const updateUserBio = async () => {
     const { city, age, gender, languages, hobbies, aboutme, lookingFor } =
       formData;
 
-    // Split languages and hobbies into arrays
     const languageArray = languages ? languages.split(",") : [];
     const hobbyArray = hobbies ? hobbies.split(",") : [];
 
-    // Constructing a single object with all fields
     const userBioData = {
       city,
       age: Number(age),
@@ -111,7 +107,7 @@ const UserBio = ({ token }) => {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/api/auth/users/${userData.id}`, // Use the fetched user ID
+        `http://localhost:8080/api/auth/users/${userData.id}`,
         {
           method: "PATCH",
           headers: {
@@ -132,7 +128,6 @@ const UserBio = ({ token }) => {
       }
 
       const updatedData = await response.json();
-      console.log("Updated user bio:", updatedData); // Log the updated user data
       setMessage({
         type: "success",
         text: "User bio updated successfully.",
@@ -156,157 +151,126 @@ const UserBio = ({ token }) => {
         backgroundColor: "#dbc5f1",
       }}
     >
-      <div>
-        <Card
-          sx={{
-            padding: 5,
-            width: { sm: 400 },
-            boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
-            borderRadius: 2,
-
-            backgroundColor: "#E3F2FD",
-          }}
-        >
-          <Typography
-            variant="h5"
-            component="h1"
+      {showUserProfile ? (
+        <div className="animate__animated animate__zoomIn animate__delay-0.5">
+          <UserProfile token={token} />
+        </div>
+      ) : (
+        <div>
+          <Card
             sx={{
-              //   textAlign: "center",
-              color: "#1A73E8",
-              marginBottom: 3,
-              fontWeight: 600,
+              padding: 5,
+              width: { sm: 400 },
+              boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
+              borderRadius: 2,
+              backgroundColor: "#E3F2FD",
             }}
           >
-            Complete Your Profile
-          </Typography>
-          {message.text && (
-            <Alert
-              severity={message.type}
+            <Typography
+              variant="h5"
+              component="h1"
               sx={{
-                marginBottom: 2,
-                backgroundColor:
-                  message.type === "danger"
-                    ? "#f8d7da"
-                    : message.type === "success"
-                    ? "#a8f49d"
-                    : "transparent",
-                color: message.type === "danger" ? "#721c24" : "inherit",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                textAlign: "center",
+                color: "#1A73E8",
+                marginBottom: 3,
+                fontWeight: 600,
               }}
-              onClose={() => setMessage({ type: "", text: "" })}
             >
-              {message.text}
-            </Alert>
-          )}
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 2,
-            }}
-          >
-            <TextField
-              name="city"
-              label="City"
-              variant="outlined"
-              fullWidth
-              value={formData.city}
-              onChange={handleInputChange}
-            />
-            <TextField
-              name="age"
-              label="Age"
-              type="number"
-              variant="outlined"
-              fullWidth
-              value={formData.age}
-              onChange={handleInputChange}
-            />
-            <TextField
-              select
-              name="gender"
-              label="Gender"
-              variant="outlined"
-              fullWidth
-              value={formData.gender}
-              onChange={handleInputChange}
-              SelectProps={{ native: true }}
-            >
-              <option value=""></option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-              <option value="Prefer not to say">Prefer not to say</option>
-            </TextField>
-
-            <TextField
-              name="languages"
-              label="Languages (comma-separated)"
-              variant="outlined"
-              fullWidth
-              value={formData.languages}
-              onChange={handleInputChange}
-            />
-            <TextField
-              name="hobbies"
-              label="Hobbies (comma-separated)"
-              variant="outlined"
-              fullWidth
-              value={formData.hobbies}
-              onChange={handleInputChange}
-            />
-            <TextField
-              name="aboutme"
-              label="About Me"
-              multiline
-              rows={3}
-              variant="outlined"
-              fullWidth
-              value={formData.aboutme}
-              onChange={handleInputChange}
-            />
-            <TextField
-              name="lookingFor"
-              label="Looking For"
-              multiline
-              rows={2}
-              variant="outlined"
-              fullWidth
-              value={formData.lookingFor}
-              onChange={handleInputChange}
-            />
-            {formData.imagePreview && (
-              <Box
+              Complete Your Profile 1/2
+            </Typography>
+            {message.text && (
+              <Alert
+                severity={message.type}
                 sx={{
-                  display: "flex",
-                  justifyContent: "center",
                   marginBottom: 2,
+                  backgroundColor:
+                    message.type === "danger"
+                      ? "#f8d7da"
+                      : message.type === "success"
+                      ? "#a8f49d"
+                      : "transparent",
+                  color: message.type === "danger" ? "#721c24" : "inherit",
+                }}
+                onClose={() => setMessage({ type: "", text: "" })}
+              >
+                {message.text}
+              </Alert>
+            )}
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 2,
+              }}
+            >
+              <TextField
+                name="city"
+                label="City"
+                variant="outlined"
+                fullWidth
+                value={formData.city}
+                onChange={handleInputChange}
+              />
+              <TextField
+                name="age"
+                label="Age"
+                type="number"
+                variant="outlined"
+                fullWidth
+                value={formData.age}
+                onChange={handleInputChange}
+              />
+              <TextField
+                select
+                name="gender"
+                label="Gender"
+                variant="outlined"
+                fullWidth
+                value={formData.gender}
+                onChange={handleInputChange}
+                slotProps={{
+                  select: {
+                    native: true,
+                  },
                 }}
               >
-                <Avatar
-                  src={formData.imagePreview}
-                  alt="Image Preview"
-                  sx={{
-                    width: 100,
-                    height: 100,
-                    borderRadius: "50%",
-                    boxShadow: 3,
-                  }}
-                />
-              </Box>
-            )}
-            <Button
-              variant="contained"
-              component="label"
-              sx={{ marginBottom: 2 }}
-            >
-              Upload Image
-              <input type="file" hidden onChange={handleFileChange} />
-            </Button>
-            <Button variant="contained" fullWidth onClick={updateUserBio}>
-              Save Bio
-            </Button>
-          </Box>
-        </Card>
-      </div>
+                <option value=""></option> {/* Default empty option */}
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Prefer not to say">Prefer not to say</option>
+              </TextField>
+
+              <TextField
+                name="languages"
+                label="Languages (comma-separated)"
+                variant="outlined"
+                fullWidth
+                value={formData.languages}
+                onChange={handleInputChange}
+              />
+              <TextField
+                name="hobbies"
+                label="Hobbies (comma-separated)"
+                variant="outlined"
+                fullWidth
+                value={formData.hobbies}
+                onChange={handleInputChange}
+              />
+
+              <Button
+                variant="contained"
+                fullWidth
+                onClick={() => setShowUserProfile(true)}
+              >
+                Next
+              </Button>
+            </Box>
+          </Card>
+        </div>
+      )}
     </Box>
   );
 };

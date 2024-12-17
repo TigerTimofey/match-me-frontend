@@ -78,6 +78,7 @@ const UserProfile = ({ token }) => {
         }
 
         const data = await response.json();
+
         setUserData(data);
       } catch (error) {
         console.error("Error fetching user data:", error);
@@ -120,6 +121,7 @@ const UserProfile = ({ token }) => {
       hobbies: hobbyArray,
       aboutme: aboutme || "",
       lookingFor,
+      isBioProvided: true,
     };
 
     try {

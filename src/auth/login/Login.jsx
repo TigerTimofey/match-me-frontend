@@ -3,8 +3,11 @@ import { TextField, Button, Box, Typography, Card, Alert } from "@mui/material";
 import "animate.css";
 import RegisterPage from "../register/Register";
 import UserBio from "./user-bio/UserBio";
+import { useNavigate } from "react-router-dom";
 
 const LoginPage = () => {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = React.useState({
     username: "",
     password: "",
@@ -66,6 +69,33 @@ const LoginPage = () => {
         localStorage.setItem("jwt", token); // Store new JWT
         setToken(token);
         console.log("Login successful, JWT stored.");
+
+        // Fetch user details to check isBioProvided
+        try {
+          const userDetailsResponse = await fetch(
+            `${process.env.REACT_APP_SERVER_URL}/api/auth/me`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          // navigate to /me if alrey provided Bio
+          if (userDetailsResponse.ok) {
+            const userData = await userDetailsResponse.json();
+
+            if (userData.bioProvided) {
+              navigate("/me");
+            }
+          } else {
+            console.error("Failed to fetch user details");
+          }
+        } catch (error) {
+          console.error("Error fetching user details:", error);
+        }
+
         setShowBio(true);
       } else {
         throw new Error("No JWT found in response");

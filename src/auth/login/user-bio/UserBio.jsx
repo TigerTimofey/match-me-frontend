@@ -1,5 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { TextField, Button, Box, Typography, Card, Alert } from "@mui/material";
+import {
+  TextField,
+  Button,
+  Box,
+  Typography,
+  Card,
+  Alert,
+  Avatar,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+} from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
 const UserBio = ({ token }) => {
@@ -71,6 +83,10 @@ const UserBio = ({ token }) => {
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     setFormData((prev) => ({ ...prev, image: file }));
+    if (file) {
+      const imageURL = URL.createObjectURL(file);
+      setFormData((prev) => ({ ...prev, imagePreview: imageURL }));
+    }
   };
 
   // Submit user bio to the database
@@ -144,9 +160,10 @@ const UserBio = ({ token }) => {
         <Card
           sx={{
             padding: 5,
-            width: { xs: "100%", sm: 400 },
+            width: { sm: 400 },
             boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
             borderRadius: 2,
+
             backgroundColor: "#E3F2FD",
           }}
         >
@@ -154,7 +171,7 @@ const UserBio = ({ token }) => {
             variant="h5"
             component="h1"
             sx={{
-              textAlign: "center",
+              //   textAlign: "center",
               color: "#1A73E8",
               marginBottom: 3,
               fontWeight: 600,
@@ -205,13 +222,21 @@ const UserBio = ({ token }) => {
               onChange={handleInputChange}
             />
             <TextField
+              select
               name="gender"
               label="Gender"
               variant="outlined"
               fullWidth
               value={formData.gender}
               onChange={handleInputChange}
-            />
+              SelectProps={{ native: true }}
+            >
+              <option value=""></option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Prefer not to say">Prefer not to say</option>
+            </TextField>
+
             <TextField
               name="languages"
               label="Languages (comma-separated)"
@@ -248,6 +273,26 @@ const UserBio = ({ token }) => {
               value={formData.lookingFor}
               onChange={handleInputChange}
             />
+            {formData.imagePreview && (
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  marginBottom: 2,
+                }}
+              >
+                <Avatar
+                  src={formData.imagePreview}
+                  alt="Image Preview"
+                  sx={{
+                    width: 100,
+                    height: 100,
+                    borderRadius: "50%",
+                    boxShadow: 3,
+                  }}
+                />
+              </Box>
+            )}
             <Button
               variant="contained"
               component="label"

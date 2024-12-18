@@ -97,9 +97,15 @@ const UserProfile = ({ token }) => {
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({
+      ...prev,
+      [name]:
+        //remove spaces
+        name === "languages" || name === "hobbies"
+          ? value.replace(/\s/g, "")
+          : value,
+    }));
   };
-
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     setFormData((prev) => ({ ...prev, image: file }));
@@ -113,8 +119,12 @@ const UserProfile = ({ token }) => {
     const { city, age, gender, languages, hobbies, aboutme, lookingFor } =
       formData;
 
-    const languageArray = languages ? languages.split(",") : [];
-    const hobbyArray = hobbies ? hobbies.split(",") : [];
+    const languageArray = languages
+      ? languages.split(",").map((lang) => lang.trim())
+      : [];
+    const hobbyArray = hobbies
+      ? hobbies.split(",").map((hobby) => hobby.trim())
+      : [];
 
     const userBioData = {
       city,

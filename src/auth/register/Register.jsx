@@ -1,6 +1,6 @@
 import React from "react";
 import { Button, Box, Typography, Card, Alert } from "@mui/material";
-import FormFields from "./FormFields";
+import FormFields from "./user-data/FormFields";
 import LoginPage from "../login/Login";
 import "animate.css";
 

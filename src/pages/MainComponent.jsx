@@ -179,10 +179,33 @@ function MainComponent() {
     setModalOpen(false);
     setModalContent(null);
   };
-
+  const handleDrawerMenuSelect = (menu, data) => {
+    switch (menu) {
+      case "Dashboard":
+        console.log(data); // Use data here, if needed
+        console.log("Dashboard in main clicked");
+        break;
+      case "Recommend":
+        console.log("Recommend in main clicked");
+        break;
+      case "Chat":
+        console.log("Chat  in main clicked");
+        break;
+      case "Logout":
+        localStorage.removeItem("jwt");
+        navigate("/");
+        break;
+      default:
+        break;
+    }
+  };
   return (
     <Box sx={{ display: "flex" }}>
-      <Drawer variant="permanent" userData={userData} />{" "}
+      <Drawer
+        variant="permanent"
+        userData={userData}
+        onSelectMenu={handleDrawerMenuSelect}
+      />{" "}
       <Box sx={{ flexGrow: 1, padding: 0 }}>
         <AppBar position="static" sx={{ backgroundColor: "rgb(44,44,44)" }}>
           <Toolbar>
@@ -199,8 +222,11 @@ function MainComponent() {
                 },
                 color: "#b2b2b2",
                 cursor: "pointer", // Enables text click
+                userSelect: "none",
+                WebkitUserSelect: "none",
+                msUserSelect: "none",
               }}
-              onClick={() => navigate("/me")} // Navigate on text click
+              onClick={() => navigate("/me")}
             >
               {!sm && (
                 <EarbudsTwoToneIcon
@@ -227,11 +253,17 @@ function MainComponent() {
               anchorEl={anchorEl}
               open={Boolean(anchorEl)}
               onClose={() => handleMenuClose("")}
-              PaperProps={{ elevation: 4 }}
+              slotProps={{ paper: { elevation: 4 } }}
+              aria-hidden={false}
             >
               <MenuItem
+                aria-hidden={false}
                 onClick={() => handleMenuClose("Profile")}
-                sx={{ display: "flex", alignItems: "center", padding: 1 }}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  padding: 2,
+                }}
               >
                 {userData?.gender === "Male" ? (
                   <FaceIcon />
@@ -249,8 +281,9 @@ function MainComponent() {
               </MenuItem>
 
               <MenuItem
+                aria-hidden={false}
                 onClick={() => handleMenuClose("Bio")}
-                sx={{ padding: 1 }}
+                sx={{ padding: 2 }}
               >
                 <FingerprintIcon />{" "}
                 <Typography
@@ -262,8 +295,9 @@ function MainComponent() {
               </MenuItem>
 
               <MenuItem
+                aria-hidden={false}
                 onClick={() => handleMenuClose("Logout")}
-                sx={{ padding: 1, color: "#dc3910" }}
+                sx={{ padding: 2, color: "#dc3910" }}
               >
                 <ExitToAppIcon sx={{ mr: 1 }} /> Logout
               </MenuItem>

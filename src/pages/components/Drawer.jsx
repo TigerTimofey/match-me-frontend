@@ -2,35 +2,45 @@ import React from "react";
 import MuiDrawer, { drawerClasses } from "@mui/material/Drawer";
 import { useMediaQuery } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { styled } from "@mui/material/styles";
-import { Typography, Box, Divider } from "@mui/material";
+import { Box, Divider, Typography } from "@mui/material";
 import HomeIcon from "@mui/icons-material/Home";
 import TelegramIcon from "@mui/icons-material/Telegram";
 import RecommendIcon from "@mui/icons-material/Recommend";
-import EarbudsTwoToneIcon from "@mui/icons-material/EarbudsTwoTone";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { useNavigate } from "react-router-dom";
 
-const Drawer = ({ userData }) => {
+const Drawer = ({ userData, onSelectMenu }) => {
   const theme = useTheme();
   const sm = useMediaQuery(theme.breakpoints.down("sm"));
-  const drawerWidth = sm ? 70 : 180;
+  const [drawerWidth, setDrawerWidth] = React.useState(sm ? 70 : 180);
 
-  const StyledDrawer = styled(MuiDrawer)(({ theme }) => ({
-    width: drawerWidth,
-    flexShrink: 0,
-    boxSizing: "border-box",
-    [`& .${drawerClasses.paper}`]: {
-      width: drawerWidth,
-      backgroundColor: theme.palette.background.paper,
-      boxSizing: "border-box",
-      borderRight: "none",
-    },
-  }));
+  React.useEffect(() => {
+    setDrawerWidth(sm ? 70 : 180);
+  }, [sm]);
 
-  const navigate = useNavigate();
+  const handleDrawerToggle = () => {
+    setDrawerWidth((prevWidth) => (prevWidth === 180 ? 70 : 180));
+  };
+
+  const handleMenuClick = (menu) => {
+    onSelectMenu(menu, userData);
+  };
 
   return (
-    <StyledDrawer variant="permanent">
+    <MuiDrawer
+      variant="permanent"
+      sx={{
+        width: drawerWidth,
+        flexShrink: 0,
+        transition: "width 0.3s ease",
+        [`& .${drawerClasses.paper}`]: {
+          width: drawerWidth,
+          backgroundColor: theme.palette.background.paper,
+          borderRight: "none",
+        },
+      }}
+    >
       <Box
         sx={{
           display: "flex",
@@ -40,7 +50,29 @@ const Drawer = ({ userData }) => {
           color: "#b2b2b2",
         }}
       >
-        {!sm && (
+        {!sm && drawerWidth !== 70 ? (
+          <>
+            <Typography
+              variant="body1"
+              sx={{
+                pt: 2,
+                width: "100%",
+                textAlign: "center",
+                fontFamily: "Poppins",
+                fontWeight: 800,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                userSelect: "none",
+                WebkitUserSelect: "none",
+                msUserSelect: "none",
+              }}
+            >
+              Welcome Back, {userData?.name} 👋
+              <ChevronLeftIcon onClick={handleDrawerToggle} />
+            </Typography>
+          </>
+        ) : (
           <Typography
             variant="body1"
             sx={{
@@ -49,23 +81,12 @@ const Drawer = ({ userData }) => {
               textAlign: "center",
               fontFamily: "Poppins",
               fontWeight: 800,
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
             }}
           >
-            Welcome Back, {userData?.name} 👋
-          </Typography>
-        )}
-        {sm && (
-          <Typography
-            variant="body1"
-            sx={{
-              pt: 2,
-              width: "100%",
-              textAlign: "center",
-              fontFamily: "Poppins",
-              fontWeight: 800,
-            }}
-          >
-            <EarbudsTwoToneIcon onClick={() => navigate("/me")} />
+            <ChevronRightIcon onClick={handleDrawerToggle} />
           </Typography>
         )}
 
@@ -82,86 +103,61 @@ const Drawer = ({ userData }) => {
           <Divider
             sx={{
               my: 2,
-
               width: "80%",
-
               backgroundColor: "background.paper",
             }}
           />
 
-          {sm ? (
+          {drawerWidth === 70 ? (
             <>
-              <Typography variant="body1" sx={{ mt: 2, fontFamily: "Poppins" }}>
-                <HomeIcon
-                  onClick={() => {
-                    console.log("Dashboard");
-                  }}
-                  sx={{ fontSize: "30px" }}
-                />
-              </Typography>
+              <HomeIcon
+                onClick={() => handleMenuClick("Dashboard")}
+                sx={{ fontSize: "30px", cursor: "pointer" }}
+              />
               <Divider
                 sx={{
                   my: 2,
-
                   width: "80%",
-
                   backgroundColor: "background.paper",
                 }}
               />
-              <Typography variant="body1" sx={{ mt: 1, fontFamily: "Poppins" }}>
-                <RecommendIcon
-                  onClick={() => {
-                    console.log("recommended");
-                  }}
-                  sx={{ fontSize: "30px" }}
-                />
-              </Typography>
+              <RecommendIcon
+                onClick={() => handleMenuClick("Recommend")}
+                sx={{ fontSize: "30px", cursor: "pointer" }}
+              />
               <Divider
                 sx={{
                   my: 2,
-
                   width: "80%",
-
                   backgroundColor: "background.paper",
                 }}
               />
-              <Typography
-                variant="body1"
-                sx={{
-                  mt: 1,
-                  fontFamily: "Poppins",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
-                onClick={() => {
-                  console.log("Chat");
-                }}
-              >
-                <TelegramIcon sx={{ fontSize: "30px" }} />
-              </Typography>
+              <TelegramIcon
+                onClick={() => handleMenuClick("Chat")}
+                sx={{ fontSize: "30px", cursor: "pointer" }}
+              />
             </>
           ) : (
             <>
               <Typography
                 variant="body1"
                 sx={{
-                  mt: 2,
+                  mt: 1,
                   fontFamily: "Poppins",
                   fontWeight: 600,
                   cursor: "pointer",
+                  userSelect: "none",
+                  WebkitUserSelect: "none",
+                  msUserSelect: "none",
                 }}
-                onClick={() => {
-                  console.log("Dashboard");
-                }}
+                onClick={() => handleMenuClick("Dashboard")}
               >
                 Dashboard
               </Typography>
               <Divider
                 sx={{
                   my: 2,
-
                   width: "80%",
-
                   backgroundColor: "background.paper",
                 }}
               />
@@ -172,19 +168,18 @@ const Drawer = ({ userData }) => {
                   fontFamily: "Poppins",
                   fontWeight: 600,
                   cursor: "pointer",
+                  userSelect: "none",
+                  WebkitUserSelect: "none",
+                  msUserSelect: "none",
                 }}
-                onClick={() => {
-                  console.log("Recommended");
-                }}
+                onClick={() => handleMenuClick("Recommend")}
               >
                 Recommend
               </Typography>
               <Divider
                 sx={{
                   my: 2,
-
                   width: "80%",
-
                   backgroundColor: "background.paper",
                 }}
               />
@@ -195,10 +190,11 @@ const Drawer = ({ userData }) => {
                   fontFamily: "Poppins",
                   fontWeight: 600,
                   cursor: "pointer",
+                  userSelect: "none",
+                  WebkitUserSelect: "none",
+                  msUserSelect: "none",
                 }}
-                onClick={() => {
-                  console.log("Chat");
-                }}
+                onClick={() => handleMenuClick("Chat")}
               >
                 Chat
               </Typography>
@@ -208,15 +204,13 @@ const Drawer = ({ userData }) => {
           <Divider
             sx={{
               my: 2,
-
               width: "80%",
-
               backgroundColor: "background.paper",
             }}
           />
         </Box>
       </Box>
-    </StyledDrawer>
+    </MuiDrawer>
   );
 };
 

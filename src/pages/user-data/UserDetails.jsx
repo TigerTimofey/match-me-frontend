@@ -6,7 +6,7 @@ function UserDetailsCard({ userData }) {
     <Card sx={{ padding: 3, marginTop: 2, boxShadow: 2 }}>
       <Typography variant="h6">User Details:</Typography>
       <Divider sx={{ my: 1 }} />
-      <Typography>Email: {userData.email}</Typography>
+      <Typography>Email: {userData.username}</Typography>
       <Typography>City: {userData.city}</Typography>
       <Typography>Age: {userData.age}</Typography>
       <Avatar

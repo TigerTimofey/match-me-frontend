@@ -288,6 +288,7 @@ function MainComponent() {
         onClose={handleModalClose}
         aria-labelledby="modal-title"
         aria-describedby="modal-description"
+        aria-hidden="false"
       >
         <Box
           sx={{

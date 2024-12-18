@@ -69,6 +69,9 @@ const UserProfile = ({ token }) => {
         );
 
         if (!response.ok) {
+          if (response.status === 401) {
+            navigate("/me");
+          }
           const errorData = await response.json();
           setMessage({
             type: "danger",
@@ -136,6 +139,9 @@ const UserProfile = ({ token }) => {
           body: JSON.stringify(userBioData),
         }
       );
+      if (response.status === 401) {
+        navigate("/");
+      }
 
       if (!response.ok) {
         const errorData = await response.json();

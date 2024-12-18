@@ -168,9 +168,8 @@ const UserProfile = ({ token }) => {
         type: "success",
         text: "User bio updated successfully.",
       });
-      setTimeout(() => {
-        navigate(`/me`);
-      }, 1000);
+
+      navigate(`/me`);
     } catch (error) {
       console.error("Error updating user bio:", error);
       setMessage({

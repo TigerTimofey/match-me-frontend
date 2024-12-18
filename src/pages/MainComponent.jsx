@@ -41,6 +41,7 @@ function MainComponent() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalContent, setModalContent] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [activeMenu, setActiveMenu] = useState("Dashboard");
 
   useEffect(() => {
     const token = localStorage.getItem("jwt");
@@ -160,7 +161,7 @@ function MainComponent() {
         setUserProfileData(data);
         setUserBioData(null);
       } else if (menuItem === "Bio") {
-        setUserBioData(data);
+        setUserBioData({ ...data, currentUserId: userData?.id });
         setUserProfileData(null);
       }
       setModalOpen(true);
@@ -180,9 +181,10 @@ function MainComponent() {
     setModalContent(null);
   };
   const handleDrawerMenuSelect = (menu, data) => {
+    setActiveMenu(menu);
     switch (menu) {
       case "Dashboard":
-        console.log(data); // Use data here, if needed
+        console.log(data);
         console.log("Dashboard in main clicked");
         break;
       case "Recommend":
@@ -204,6 +206,7 @@ function MainComponent() {
       <Drawer
         variant="permanent"
         userData={userData}
+        activeMenu={activeMenu}
         onSelectMenu={handleDrawerMenuSelect}
       />{" "}
       <Box sx={{ flexGrow: 1, padding: 0 }}>
@@ -221,12 +224,15 @@ function MainComponent() {
                   sm: "1.6rem",
                 },
                 color: "#b2b2b2",
-                cursor: "pointer", // Enables text click
+                cursor: "pointer",
                 userSelect: "none",
                 WebkitUserSelect: "none",
                 msUserSelect: "none",
               }}
-              onClick={() => navigate("/me")}
+              onClick={() => {
+                navigate("/me");
+                handleDrawerMenuSelect("Dashboard");
+              }}
             >
               {!sm && (
                 <EarbudsTwoToneIcon
@@ -342,9 +348,12 @@ function MainComponent() {
           {loading ? (
             <CircularProgress sx={{ display: "block", margin: "auto" }} />
           ) : modalContent === "Profile" && userProfileData ? (
-            <UserProfileCard userProfileData={userProfileData} />
+            <UserProfileCard
+              curentUserId={userData?.id}
+              userProfileData={userProfileData}
+            />
           ) : modalContent === "Bio" && userBioData ? (
-            <UserBioCard userBioData={userBioData} />
+            <UserBioCard curentUserId={userData.id} userBioData={userBioData} />
           ) : (
             <Typography>Loading...</Typography>
           )}

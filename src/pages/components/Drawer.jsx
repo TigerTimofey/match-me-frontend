@@ -8,9 +8,8 @@ import TelegramIcon from "@mui/icons-material/Telegram";
 import RecommendIcon from "@mui/icons-material/Recommend";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import { useNavigate } from "react-router-dom";
 
-const Drawer = ({ userData, onSelectMenu }) => {
+const Drawer = ({ userData, onSelectMenu, activeMenu }) => {
   const theme = useTheme();
   const sm = useMediaQuery(theme.breakpoints.down("sm"));
   const [drawerWidth, setDrawerWidth] = React.useState(sm ? 70 : 180);
@@ -26,6 +25,15 @@ const Drawer = ({ userData, onSelectMenu }) => {
   const handleMenuClick = (menu) => {
     onSelectMenu(menu, userData);
   };
+
+  const getMenuItemStyle = (menu) => ({
+    backgroundColor: activeMenu === menu ? "#ffffff" : "inherit",
+    color: activeMenu === menu ? "#000000" : "#b2b2b2",
+    borderRadius: "8px",
+    padding: "8px 16px",
+    transition: "background-color 0.3s, color 0.3s",
+    cursor: "pointer",
+  });
 
   return (
     <MuiDrawer
@@ -51,27 +59,23 @@ const Drawer = ({ userData, onSelectMenu }) => {
         }}
       >
         {!sm && drawerWidth !== 70 ? (
-          <>
-            <Typography
-              variant="body1"
-              sx={{
-                pt: 2,
-                width: "100%",
-                textAlign: "center",
-                fontFamily: "Poppins",
-                fontWeight: 800,
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                userSelect: "none",
-                WebkitUserSelect: "none",
-                msUserSelect: "none",
-              }}
-            >
-              Welcome Back, {userData?.name} 👋
-              <ChevronLeftIcon onClick={handleDrawerToggle} />
-            </Typography>
-          </>
+          <Typography
+            variant="body1"
+            sx={{
+              pt: 2,
+              width: "100%",
+              textAlign: "center",
+              fontFamily: "Poppins",
+              fontWeight: 600,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              userSelect: "none",
+            }}
+          >
+            Welcome Back, {userData?.name} 👋
+            <ChevronLeftIcon onClick={handleDrawerToggle} />
+          </Typography>
         ) : (
           <Typography
             variant="body1"
@@ -112,7 +116,7 @@ const Drawer = ({ userData, onSelectMenu }) => {
             <>
               <HomeIcon
                 onClick={() => handleMenuClick("Dashboard")}
-                sx={{ fontSize: "30px", cursor: "pointer" }}
+                sx={getMenuItemStyle("Dashboard")}
               />
               <Divider
                 sx={{
@@ -123,7 +127,7 @@ const Drawer = ({ userData, onSelectMenu }) => {
               />
               <RecommendIcon
                 onClick={() => handleMenuClick("Recommend")}
-                sx={{ fontSize: "30px", cursor: "pointer" }}
+                sx={getMenuItemStyle("Recommend")}
               />
               <Divider
                 sx={{
@@ -134,22 +138,14 @@ const Drawer = ({ userData, onSelectMenu }) => {
               />
               <TelegramIcon
                 onClick={() => handleMenuClick("Chat")}
-                sx={{ fontSize: "30px", cursor: "pointer" }}
+                sx={getMenuItemStyle("Chat")}
               />
             </>
           ) : (
             <>
               <Typography
                 variant="body1"
-                sx={{
-                  mt: 1,
-                  fontFamily: "Poppins",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  userSelect: "none",
-                  WebkitUserSelect: "none",
-                  msUserSelect: "none",
-                }}
+                sx={getMenuItemStyle("Dashboard")}
                 onClick={() => handleMenuClick("Dashboard")}
               >
                 Dashboard
@@ -163,15 +159,7 @@ const Drawer = ({ userData, onSelectMenu }) => {
               />
               <Typography
                 variant="body1"
-                sx={{
-                  mt: 1,
-                  fontFamily: "Poppins",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  userSelect: "none",
-                  WebkitUserSelect: "none",
-                  msUserSelect: "none",
-                }}
+                sx={getMenuItemStyle("Recommend")}
                 onClick={() => handleMenuClick("Recommend")}
               >
                 Recommend
@@ -185,15 +173,7 @@ const Drawer = ({ userData, onSelectMenu }) => {
               />
               <Typography
                 variant="body1"
-                sx={{
-                  mt: 1,
-                  fontFamily: "Poppins",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  userSelect: "none",
-                  WebkitUserSelect: "none",
-                  msUserSelect: "none",
-                }}
+                sx={getMenuItemStyle("Chat")}
                 onClick={() => handleMenuClick("Chat")}
               >
                 Chat

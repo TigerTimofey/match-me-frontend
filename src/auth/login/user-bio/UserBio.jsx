@@ -1,7 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { TextField, Button, Box, Typography, Card, Alert } from "@mui/material";
+import {
+  TextField,
+  Button,
+  Box,
+  Typography,
+  Card,
+  Alert,
+  Autocomplete,
+} from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import UserProfile from "./UserProfile";
+import { languages } from "../../../local-variables/languages";
 
 const UserBio = ({ token }) => {
   const [formData, setFormData] = useState({
@@ -246,14 +255,34 @@ const UserBio = ({ token }) => {
                 <option value="Prefer not to say">Prefer not to say</option>
               </TextField>
 
-              <TextField
+              {/* <TextField
                 name="languages"
                 label="Languages (comma-separated)"
                 variant="outlined"
                 fullWidth
                 value={formData.languages}
                 onChange={handleInputChange}
+              /> */}
+              <Autocomplete
+                multiple
+                options={languages}
+                value={formData.languages ? formData.languages.split(",") : []}
+                onChange={(event, newValue) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    languages: newValue.join(", "),
+                  }))
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Languages"
+                    variant="outlined"
+                    fullWidth
+                  />
+                )}
               />
+
               <TextField
                 name="hobbies"
                 label="Hobbies (comma-separated)"

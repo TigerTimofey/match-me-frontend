@@ -265,7 +265,7 @@ const UserBio = ({ token }) => {
               /> */}
               <Autocomplete
                 multiple
-                options={languages}
+                options={Object.keys(languages)} // Use keys from the languages object
                 value={formData.languages ? formData.languages.split(",") : []}
                 onChange={(event, newValue) =>
                   setFormData((prev) => ({

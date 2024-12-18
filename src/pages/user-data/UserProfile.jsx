@@ -111,10 +111,10 @@ function UserProfileCard({ userProfileData, curentUserId }) {
         {userBioData.languages.map((lang, index) => (
           <Chip
             key={index}
-            label={lang}
-            sx={{ m: 0.5 }}
+            label={languages[lang]}
+            sx={{ m: 0.5, fontSize: "2.5rem" }}
             deleteIcon={<CancelIcon />}
-            onDelete={() => handleRemoveLanguage(lang)}
+            // onDelete={() => handleRemoveLanguage(lang)}
           />
         ))}
       </Box>
@@ -178,7 +178,7 @@ function UserProfileCard({ userProfileData, curentUserId }) {
           />
           <Autocomplete
             multiple
-            options={languages}
+            options={Object.keys(languages)}
             value={userBioData.languages}
             onChange={handleMultiSelectChange}
             renderInput={(params) => (

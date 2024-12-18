@@ -116,7 +116,7 @@ const LoginPage = () => {
         justifyContent: "center",
         alignItems: "center",
         height: "100vh",
-        backgroundColor: "#dbc5f1",
+        backgroundColor: "#7c7c7c",
       }}
     >
       {showRegister ? (
@@ -135,7 +135,7 @@ const LoginPage = () => {
               width: { sm: 400 },
               boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
               borderRadius: 2,
-              backgroundColor: "#E3F2FD",
+              backgroundColor: "#f0efef",
             }}
           >
             <Typography

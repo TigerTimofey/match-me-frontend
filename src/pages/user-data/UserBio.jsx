@@ -10,7 +10,7 @@ function UserBioCard({ userBioData }) {
       flexDirection="column"
       alignItems="center"
       justifyContent="center"
-      sx={{ padding: 4 }}
+      sx={{ padding: 4, backgroundColor: "#f4f3f3", color: "rgb(44,44,44)" }}
     >
       <Typography
         variant="h4"

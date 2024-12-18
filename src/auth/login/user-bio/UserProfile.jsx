@@ -171,7 +171,7 @@ const UserProfile = ({ token }) => {
         justifyContent: "center",
         alignItems: "center",
         height: "100vh",
-        backgroundColor: "#dbc5f1",
+        backgroundColor: "#7c7c7c",
       }}
     >
       {showUserBio ? (
@@ -186,7 +186,7 @@ const UserProfile = ({ token }) => {
               width: { sm: 400 },
               boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
               borderRadius: 2,
-              backgroundColor: "#E3F2FD",
+              backgroundColor: "#f0efef",
             }}
           >
             <Typography
@@ -229,15 +229,6 @@ const UserProfile = ({ token }) => {
                 gap: 2,
               }}
             >
-              <TextField
-                name="languages"
-                label="Languages (comma-separated)"
-                variant="outlined"
-                fullWidth
-                value={formData.languages}
-                onChange={handleInputChange}
-              />
-
               <TextField
                 name="aboutme"
                 label="About Me"

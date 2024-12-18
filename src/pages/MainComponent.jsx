@@ -8,23 +8,32 @@ import {
   AppBar,
   Toolbar,
   Avatar,
-  IconButton,
   Menu,
   MenuItem,
   Modal,
   CircularProgress,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
-import MenuIcon from "@mui/icons-material/Menu";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import UserDetailsCard from "./user-data/UserDetails";
 import UserProfileCard from "./user-data/UserProfile";
 import UserBioCard from "./user-data/UserBio";
 import Drawer from "./components/Drawer";
 
+import EarbudsTwoToneIcon from "@mui/icons-material/EarbudsTwoTone";
+import FaceIcon from "@mui/icons-material/Face";
+import Face3Icon from "@mui/icons-material/Face3";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import FingerprintIcon from "@mui/icons-material/Fingerprint";
+
 function MainComponent() {
+  const theme = useTheme();
+  const sm = useMediaQuery(theme.breakpoints.down("sm"));
+
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
-  // const [username, setUsername] = useState("Guest");
+
   const [userData, setUserData] = useState(null);
   const [userBioData, setUserBioData] = useState(null);
   const [userProfileData, setUserProfileData] = useState(null);
@@ -36,16 +45,6 @@ function MainComponent() {
   useEffect(() => {
     const token = localStorage.getItem("jwt");
     if (token) {
-      // try {
-      //   const decoded = jwtDecode(token);
-      //   setUsername(decoded.username || "User");
-      //   console.log(username);
-      // } catch (error) {
-      //   console.error("Error decoding JWT:", error);
-      //   setUsername("Guest");
-      //   navigate()
-      // }
-
       const fetchUserDetails = async () => {
         try {
           const response = await fetch(
@@ -113,9 +112,9 @@ function MainComponent() {
         endpoint = "/api/auth/me/profile";
         setModalContent("Profile");
         break;
-      case "Biographic":
+      case "Bio":
         endpoint = "/api/auth/me/bio";
-        setModalContent("Biographic");
+        setModalContent("Bio");
         break;
       default:
         setLoading(false);
@@ -160,7 +159,7 @@ function MainComponent() {
       if (menuItem === "Profile") {
         setUserProfileData(data);
         setUserBioData(null);
-      } else if (menuItem === "Biographic") {
+      } else if (menuItem === "Bio") {
         setUserBioData(data);
         setUserProfileData(null);
       }
@@ -185,56 +184,96 @@ function MainComponent() {
     <Box sx={{ display: "flex" }}>
       <Drawer variant="permanent" userData={userData} />{" "}
       <Box sx={{ flexGrow: 1, padding: 0 }}>
-        <AppBar position="static">
+        <AppBar position="static" sx={{ backgroundColor: "rgb(44,44,44)" }}>
           <Toolbar>
             <Typography
-              variant="h9"
-              sx={{ flexGrow: 1, fontFamily: "Poppins" }}
+              variant="h6"
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                flexGrow: 1,
+                fontFamily: "Poppins",
+                fontSize: {
+                  xs: "1.2rem",
+                  sm: "1.6rem",
+                },
+                color: "#b2b2b2",
+                cursor: "pointer", // Enables text click
+              }}
+              onClick={() => navigate("/me")} // Navigate on text click
             >
-              MM
+              {!sm && (
+                <EarbudsTwoToneIcon
+                  sx={{ fontSize: 35, mr: 1, cursor: "pointer" }}
+                />
+              )}
+              Match Me
             </Typography>
+
             <Avatar
               src={userData?.avatarUrl}
               sx={{
-                width: 40,
-                height: 40,
+                width: 35,
+                height: 35,
                 ml: 2,
                 border: 1,
                 borderColor: "white",
                 boxShadow: 1,
+                cursor: "pointer",
               }}
-            />
-            <IconButton
-              edge="end"
-              color="inherit"
               onClick={handleMenuOpen}
-              sx={{ ml: 2 }}
-            >
-              <MenuIcon />
-            </IconButton>
+            />
             <Menu
               anchorEl={anchorEl}
               open={Boolean(anchorEl)}
               onClose={() => handleMenuClose("")}
               PaperProps={{ elevation: 4 }}
             >
-              <MenuItem onClick={() => handleMenuClose("Profile")}>
-                Profile
+              <MenuItem
+                onClick={() => handleMenuClose("Profile")}
+                sx={{ display: "flex", alignItems: "center", padding: 1 }}
+              >
+                {userData?.gender === "Male" ? (
+                  <FaceIcon />
+                ) : userData?.gender === "Female" ? (
+                  <Face3Icon />
+                ) : (
+                  <AccountCircleIcon />
+                )}
+                <Typography
+                  variant="body1"
+                  sx={{ display: "flex", alignItems: "center", ml: 1 }}
+                >
+                  Profile
+                </Typography>
               </MenuItem>
-              <MenuItem onClick={() => handleMenuClose("Biographic")}>
-                Biographic
+
+              <MenuItem
+                onClick={() => handleMenuClose("Bio")}
+                sx={{ padding: 1 }}
+              >
+                <FingerprintIcon />{" "}
+                <Typography
+                  variant="body1"
+                  sx={{ display: "flex", alignItems: "center", ml: 1 }}
+                >
+                  Bio
+                </Typography>
               </MenuItem>
+
               <MenuItem
                 onClick={() => handleMenuClose("Logout")}
-                sx={{ color: "error.main" }}
+                sx={{ padding: 1, color: "#dc3910" }}
               >
-                <ExitToAppIcon sx={{ mr: 1 }} />
-                Logout
+                <ExitToAppIcon sx={{ mr: 1 }} /> Logout
               </MenuItem>
             </Menu>
           </Toolbar>
         </AppBar>
-        <Box>
+
+        {/* DATA SHOW WELL CHOOSE MENU */}
+
+        <Box sx={{ mt: 2 }}>
           {message.type && (
             <Alert severity={message.type} sx={{ mb: 2 }}>
               {message.text}
@@ -261,13 +300,15 @@ function MainComponent() {
             borderRadius: 2,
             boxShadow: 24,
             p: 4,
+            backgroundColor: "#f4f3f3",
+            color: "rgb(44,44,44)",
           }}
         >
           {loading ? (
             <CircularProgress sx={{ display: "block", margin: "auto" }} />
           ) : modalContent === "Profile" && userProfileData ? (
             <UserProfileCard userProfileData={userProfileData} />
-          ) : modalContent === "Biographic" && userBioData ? (
+          ) : modalContent === "Bio" && userBioData ? (
             <UserBioCard userBioData={userBioData} />
           ) : (
             <Typography>Loading...</Typography>

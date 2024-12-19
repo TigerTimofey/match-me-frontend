@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   TextField,
   Button,
@@ -14,7 +14,7 @@ import UserBio from "./UserBio";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 
 const UserProfile = ({ token }) => {
-  const [formData, setFormData] = useState(() => {
+  const [formData, setFormData] = React.useState(() => {
     const savedData = localStorage.getItem("userBioForm");
     return savedData
       ? JSON.parse(savedData)
@@ -30,12 +30,12 @@ const UserProfile = ({ token }) => {
         };
   });
 
-  const [message, setMessage] = useState({
+  const [message, setMessage] = React.useState({
     type: "",
     text: "",
   });
 
-  const [userData, setUserData] = useState(null);
+  const [userData, setUserData] = React.useState(null);
   const [showUserBio, setShowUserBio] = React.useState(false);
 
   const navigate = useNavigate();
@@ -50,11 +50,11 @@ const UserProfile = ({ token }) => {
     whiteSpace: "nowrap",
     width: 1,
   });
-  useEffect(() => {
+  React.useEffect(() => {
     localStorage.setItem("userBioForm", JSON.stringify(formData));
   }, [formData]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const fetchUserDetails = async () => {
       try {
         const response = await fetch(
@@ -93,7 +93,7 @@ const UserProfile = ({ token }) => {
     };
 
     fetchUserDetails();
-  }, [token]);
+  }, [token, navigate]);
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;

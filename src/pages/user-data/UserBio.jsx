@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   Typography,
   Divider,
@@ -7,12 +7,14 @@ import {
   Box,
   TextField,
   Alert,
+  Autocomplete,
 } from "@mui/material";
+import { hobbiesDb } from "../../local-variables/hobbies";
 
 function UserBioCard({ userBioData }) {
-  const [open, setOpen] = useState(false);
-  const [bioData, setBioData] = useState(userBioData);
-  const [message, setMessage] = useState({
+  const [open, setOpen] = React.useState(false);
+  const [bioData, setBioData] = React.useState(userBioData);
+  const [message, setMessage] = React.useState({
     type: "",
     text: "",
   });
@@ -64,8 +66,6 @@ function UserBioCard({ userBioData }) {
         });
         return;
       }
-
-      const updatedData = await response.json();
       setMessage({
         type: "success",
         text: "User bio updated successfully.",
@@ -123,16 +123,30 @@ function UserBioCard({ userBioData }) {
         {bioData.hobbies?.join(", ") || ""}
       </Typography>
 
-      <Button
-        variant="contained"
-        color="primary"
-        sx={{ mt: 3 }}
-        onClick={handleOpen}
+      <Box sx={{ position: "absolute", top: 16, right: 16 }}>
+        <Button
+          variant="contained"
+          color="primary"
+          sx={{
+            backgroundColor: "rgb(44,44,44)",
+            color: "#f4f3f3",
+            fontWeight: 600,
+            fontFamily: "Poppins",
+          }}
+          onClick={handleOpen}
+        >
+          Edit Bio
+        </Button>
+      </Box>
+      <Modal
+        open={open}
+        onClose={handleClose}
+        sx={{
+          "& .MuiBackdrop-root": {
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+          },
+        }}
       >
-        Edit Bio
-      </Button>
-
-      <Modal open={open} onClose={handleClose}>
         <Box
           sx={{
             position: "absolute",
@@ -140,12 +154,18 @@ function UserBioCard({ userBioData }) {
             left: "50%",
             transform: "translate(-50%, -50%)",
             width: 400,
-            bgcolor: "background.paper",
+            bgcolor: "#f0efef",
+            boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
+            borderRadius: "8px",
             p: 4,
-            boxShadow: 24,
           }}
         >
-          <Typography variant="h6" align="center" gutterBottom>
+          <Typography
+            variant="h6"
+            align="center"
+            gutterBottom
+            sx={{ color: "rgb(72, 71, 71)", fontWeight: 600 }}
+          >
             Edit Bio
           </Typography>
           {message.text && (
@@ -200,10 +220,8 @@ function UserBioCard({ userBioData }) {
             value={bioData.gender}
             onChange={handleInputChange}
             sx={{ mb: 2 }}
-            slotProps={{
-              select: {
-                native: true,
-              },
+            SelectProps={{
+              native: true,
             }}
           >
             <option value="Male">Male</option>
@@ -218,24 +236,30 @@ function UserBioCard({ userBioData }) {
             onChange={handleInputChange}
             sx={{ mb: 2 }}
           />
-
-          <TextField
-            fullWidth
-            label="Hobbies"
-            name="hobbies"
-            value={bioData.hobbies?.join(", ") || ""}
-            onChange={(e) =>
+          <Autocomplete
+            multiple
+            options={Object.keys(hobbiesDb)}
+            value={bioData.hobbies}
+            onChange={(event, newValue) =>
               setBioData((prev) => ({
                 ...prev,
-                hobbies: e.target.value.split(",").map((h) => h.trim()),
+                hobbies: newValue.map((hobby) => hobbiesDb[hobby]),
               }))
             }
-            sx={{ mb: 2 }}
+            renderInput={(params) => (
+              <TextField {...params} label="Hobbies" sx={{ mt: 2 }} />
+            )}
           />
+
           <Button
             fullWidth
-            variant="contained"
-            color="primary"
+            variant="outlined"
+            sx={{
+              mt: 3,
+              color: "#f4f3f3",
+              backgroundColor: "rgb(44,44,44)",
+              "&:hover": { backgroundColor: "rgb(72, 71, 71)" },
+            }}
             onClick={handleSubmit}
           >
             Save

@@ -9,7 +9,6 @@ import {
   TextField,
   Autocomplete,
   Chip,
-  IconButton,
 } from "@mui/material";
 
 import { languages } from "../../local-variables/languages";
@@ -124,22 +123,28 @@ function UserProfileCard({ userProfileData, currentUserId }) {
         ))}
       </Box>
 
-      <Button
-        variant="contained"
-        color="primary"
-        sx={{ mt: 3 }}
-        onClick={handleOpen}
-      >
-        Edit Profile
-      </Button>
+      <Box sx={{ position: "absolute", top: 16, right: 16 }}>
+        <Button
+          variant="contained"
+          color="primary"
+          sx={{
+            backgroundColor: "rgb(44,44,44)",
+            color: "#f4f3f3",
+            fontWeight: 600,
+            fontFamily: "Poppins",
+          }}
+          onClick={handleOpen}
+        >
+          Edit Profile
+        </Button>
+      </Box>
 
       <Modal
         open={open}
         onClose={handleClose}
         sx={{
-          "& .MuiPaper-root": {
-            outline: "none",
-            border: "none",
+          "& .MuiBackdrop-root": {
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
           },
         }}
       >
@@ -150,12 +155,18 @@ function UserProfileCard({ userProfileData, currentUserId }) {
             left: "50%",
             transform: "translate(-50%, -50%)",
             width: 400,
-            bgcolor: "background.paper",
+            bgcolor: "#f0efef",
+            boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
+            borderRadius: "8px",
             p: 4,
-            boxShadow: 24,
           }}
         >
-          <Typography variant="h6" align="center" gutterBottom>
+          <Typography
+            variant="h6"
+            align="center"
+            gutterBottom
+            sx={{ color: "rgb(72, 71, 71)", fontWeight: 600 }}
+          >
             Edit Profile
           </Typography>
           <TextField
@@ -199,11 +210,15 @@ function UserProfileCard({ userProfileData, currentUserId }) {
               <TextField {...params} label="Languages" sx={{ mt: 2 }} />
             )}
           />
-
           <Button
             fullWidth
-            variant="contained"
-            color="primary"
+            variant="outlined"
+            sx={{
+              mt: 3,
+              color: "#f4f3f3",
+              backgroundColor: "rgb(44,44,44)",
+              "&:hover": { backgroundColor: "rgb(72, 71, 71)" },
+            }}
             onClick={handleSubmit}
           >
             Save

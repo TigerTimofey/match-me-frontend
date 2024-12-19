@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Typography,
   Divider,
@@ -9,8 +9,7 @@ import {
   Alert,
 } from "@mui/material";
 
-function UserBioCard({ userBioData, currentUserId }) {
-  console.log(currentUserId);
+function UserBioCard({ userBioData }) {
   const [open, setOpen] = useState(false);
   const [bioData, setBioData] = useState(userBioData);
   const [message, setMessage] = useState({
@@ -23,15 +22,16 @@ function UserBioCard({ userBioData, currentUserId }) {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+
     setBioData((prev) => ({ ...prev, [name]: value }));
   };
+
   const handleSubmit = async () => {
     try {
-      const token = localStorage.getItem("token");
-      const { age, ...restOfBioData } = bioData;
+      const token = localStorage.getItem("jwt");
+      const { currentUserId, ...restOfBioData } = bioData;
 
-      // Validate age
-      if (isNaN(Number(age)) || age === "") {
+      if (isNaN(Number(restOfBioData.age)) || restOfBioData.age === "") {
         setMessage({
           type: "danger",
           text: "Please enter a valid age.",
@@ -41,11 +41,11 @@ function UserBioCard({ userBioData, currentUserId }) {
 
       const userBioData = {
         ...restOfBioData,
-        age: Number(age), // Ensure age is a number
+        age: Number(restOfBioData.age),
       };
 
       const response = await fetch(
-        `${process.env.REACT_APP_SERVER_URL}/api/auth/users/${currentUserId}`,
+        `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}`,
         {
           method: "PATCH",
           headers: {
@@ -70,7 +70,7 @@ function UserBioCard({ userBioData, currentUserId }) {
         type: "success",
         text: "User bio updated successfully.",
       });
-      setOpen(false); // Close modal after success
+      setOpen(false);
     } catch (error) {
       console.error("Error updating user bio:", error);
       setMessage({
@@ -79,6 +79,7 @@ function UserBioCard({ userBioData, currentUserId }) {
       });
     }
   };
+
   return (
     <Box
       display="flex"
@@ -119,7 +120,7 @@ function UserBioCard({ userBioData, currentUserId }) {
       </Typography>
 
       <Typography variant="body1" align="center">
-        {bioData.hobbies.join(", ")}
+        {bioData.hobbies?.join(", ") || ""}
       </Typography>
 
       <Button
@@ -199,8 +200,12 @@ function UserBioCard({ userBioData, currentUserId }) {
             value={bioData.gender}
             onChange={handleInputChange}
             sx={{ mb: 2 }}
+            slotProps={{
+              select: {
+                native: true,
+              },
+            }}
           >
-            <option value=""> </option> {/* Default empty option */}
             <option value="Male">Male</option>
             <option value="Female">Female</option>
             <option value="Prefer not to say">Prefer not to say</option>
@@ -213,11 +218,12 @@ function UserBioCard({ userBioData, currentUserId }) {
             onChange={handleInputChange}
             sx={{ mb: 2 }}
           />
+
           <TextField
             fullWidth
             label="Hobbies"
             name="hobbies"
-            value={bioData.hobbies.join(", ")}
+            value={bioData.hobbies?.join(", ") || ""}
             onChange={(e) =>
               setBioData((prev) => ({
                 ...prev,

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Typography,
   Avatar,
@@ -11,12 +11,20 @@ import {
   Chip,
   IconButton,
 } from "@mui/material";
-import CancelIcon from "@mui/icons-material/Cancel";
+
 import { languages } from "../../local-variables/languages";
 
-function UserProfileCard({ userProfileData, curentUserId }) {
+function UserProfileCard({ userProfileData, currentUserId }) {
   const [open, setOpen] = useState(false);
   const [userBioData, setUserBioData] = useState(userProfileData);
+  const [tokenProfile, setTokenProfile] = useState("");
+
+  useEffect(() => {
+    const token = localStorage.getItem("jwt");
+    if (token) {
+      setTokenProfile(token);
+    }
+  }, []);
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
@@ -30,29 +38,28 @@ function UserProfileCard({ userProfileData, curentUserId }) {
     setUserBioData((prev) => ({ ...prev, languages: newValue }));
   };
 
-  const handleRemoveLanguage = (languageToRemove) => {
-    setUserBioData((prev) => ({
-      ...prev,
-      languages: prev.languages.filter((lang) => lang !== languageToRemove),
-    }));
-  };
-
   const handleSubmit = async () => {
     try {
-      const token = localStorage.getItem("token");
       const response = await fetch(
-        `${process.env.REACT_APP_SERVER_URL}/api/auth/users/${curentUserId}`,
+        `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}`,
         {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${tokenProfile}`,
           },
           body: JSON.stringify(userBioData),
         }
       );
+
       if (response.ok) {
         handleClose();
+        const updatedData = await response.json();
+        setUserBioData(updatedData);
+        console.log("Updated Profile Data:", updatedData);
+      } else {
+        const errorData = await response.json();
+        console.error("Failed to update profile:", errorData);
       }
     } catch (error) {
       console.error("Failed to update profile:", error);
@@ -113,8 +120,6 @@ function UserProfileCard({ userProfileData, curentUserId }) {
             key={index}
             label={languages[lang]}
             sx={{ m: 0.5, fontSize: "2.5rem" }}
-            deleteIcon={<CancelIcon />}
-            // onDelete={() => handleRemoveLanguage(lang)}
           />
         ))}
       </Box>
@@ -128,7 +133,16 @@ function UserProfileCard({ userProfileData, curentUserId }) {
         Edit Profile
       </Button>
 
-      <Modal open={open} onClose={handleClose}>
+      <Modal
+        open={open}
+        onClose={handleClose}
+        sx={{
+          "& .MuiPaper-root": {
+            outline: "none",
+            border: "none",
+          },
+        }}
+      >
         <Box
           sx={{
             position: "absolute",
@@ -185,21 +199,7 @@ function UserProfileCard({ userProfileData, curentUserId }) {
               <TextField {...params} label="Languages" sx={{ mt: 2 }} />
             )}
           />
-          {userBioData.languages.includes("Others") && (
-            <TextField
-              fullWidth
-              label="Specify your language"
-              name="customLanguage"
-              value={userBioData.customLanguage || ""}
-              onChange={(e) =>
-                setUserBioData((prev) => ({
-                  ...prev,
-                  customLanguage: e.target.value,
-                }))
-              }
-              sx={{ mt: 2 }}
-            />
-          )}
+
           <Button
             fullWidth
             variant="contained"

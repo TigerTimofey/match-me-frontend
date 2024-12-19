@@ -35,6 +35,7 @@ function MainComponent() {
   const [anchorEl, setAnchorEl] = useState(null);
 
   const [userData, setUserData] = useState(null);
+
   const [userBioData, setUserBioData] = useState(null);
   const [userProfileData, setUserProfileData] = useState(null);
   const [message, setMessage] = useState({ type: "", text: "" });
@@ -49,7 +50,7 @@ function MainComponent() {
       const fetchUserDetails = async () => {
         try {
           const response = await fetch(
-            `${process.env.REACT_APP_SERVER_URL}/api/auth/me`,
+            `${process.env.REACT_APP_SERVER_URL}/api/users/me`,
             {
               method: "GET",
               headers: {
@@ -110,11 +111,11 @@ function MainComponent() {
 
     switch (menuItem) {
       case "Profile":
-        endpoint = "/api/auth/me/profile";
+        endpoint = "/api/users/me/profile";
         setModalContent("Profile");
         break;
       case "Bio":
-        endpoint = "/api/auth/me/bio";
+        endpoint = "/api/users/me/bio";
         setModalContent("Bio");
         break;
       default:
@@ -349,11 +350,11 @@ function MainComponent() {
             <CircularProgress sx={{ display: "block", margin: "auto" }} />
           ) : modalContent === "Profile" && userProfileData ? (
             <UserProfileCard
-              curentUserId={userData?.id}
+              currentUserId={userData.id}
               userProfileData={userProfileData}
             />
           ) : modalContent === "Bio" && userBioData ? (
-            <UserBioCard curentUserId={userData.id} userBioData={userBioData} />
+            <UserBioCard userBioData={userBioData} />
           ) : (
             <Typography>Loading...</Typography>
           )}

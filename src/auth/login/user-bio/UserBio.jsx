@@ -41,7 +41,7 @@ const UserBio = ({ token }) => {
     const fetchUserDetails = async () => {
       try {
         const response = await fetch(
-          `${process.env.REACT_APP_SERVER_URL}/api/auth/me`,
+          `${process.env.REACT_APP_SERVER_URL}/api/users/me`,
           {
             method: "GET",
             headers: {
@@ -64,7 +64,7 @@ const UserBio = ({ token }) => {
         }
 
         const data = await response.json();
-        setUserData(data); // Save the fetched user data
+        setUserData(data);
         setFormData({
           city: data.city || "",
           age: data.age || "",
@@ -119,7 +119,7 @@ const UserBio = ({ token }) => {
 
     try {
       const response = await fetch(
-        `http://localhost:8080/api/auth/users/${userData.id}`,
+        `http://localhost:8080/api/users/${userData.id}`,
         {
           method: "PATCH",
           headers: {
@@ -255,17 +255,9 @@ const UserBio = ({ token }) => {
                 <option value="Prefer not to say">Prefer not to say</option>
               </TextField>
 
-              {/* <TextField
-                name="languages"
-                label="Languages (comma-separated)"
-                variant="outlined"
-                fullWidth
-                value={formData.languages}
-                onChange={handleInputChange}
-              /> */}
               <Autocomplete
                 multiple
-                options={Object.keys(languages)} // Use keys from the languages object
+                options={Object.keys(languages)}
                 value={formData.languages ? formData.languages.split(",") : []}
                 onChange={(event, newValue) =>
                   setFormData((prev) => ({

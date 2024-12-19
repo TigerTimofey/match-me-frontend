@@ -58,7 +58,7 @@ const UserProfile = ({ token }) => {
     const fetchUserDetails = async () => {
       try {
         const response = await fetch(
-          `${process.env.REACT_APP_SERVER_URL}/api/auth/me`,
+          `${process.env.REACT_APP_SERVER_URL}/api/users/me`,
           {
             method: "GET",
             headers: {
@@ -100,7 +100,6 @@ const UserProfile = ({ token }) => {
     setFormData((prev) => ({
       ...prev,
       [name]:
-        //remove spaces
         name === "languages" || name === "hobbies"
           ? value.replace(/\s/g, "")
           : value,
@@ -135,11 +134,12 @@ const UserProfile = ({ token }) => {
       aboutme: aboutme || "",
       lookingFor,
       isBioProvided: true,
+      // bioProvided: true,
     };
 
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_SERVER_URL}/api/auth/users/${userData.id}`,
+        `${process.env.REACT_APP_SERVER_URL}/api/users/${userData.id}`,
         {
           method: "PATCH",
           headers: {

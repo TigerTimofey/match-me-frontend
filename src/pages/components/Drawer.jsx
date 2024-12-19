@@ -90,7 +90,11 @@ const Drawer = ({ userData, onSelectMenu, activeMenu }) => {
               alignItems: "center",
             }}
           >
-            <ChevronRightIcon onClick={handleDrawerToggle} />
+            {drawerWidth === 70 ? (
+              <ChevronRightIcon onClick={handleDrawerToggle} />
+            ) : (
+              <ChevronLeftIcon onClick={handleDrawerToggle} />
+            )}
           </Typography>
         )}
 

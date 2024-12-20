@@ -12,12 +12,26 @@ import {
 } from "@mui/material";
 
 import { languages } from "../../local-variables/languages";
+import { handleImageDisplay } from "../../utils/handleImageDisplay";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import { styled } from "@mui/material";
 
 function UserProfileCard({ userProfileData, currentUserId }) {
   const [open, setOpen] = useState(false);
   const [userBioData, setUserBioData] = useState(userProfileData);
   const [tokenProfile, setTokenProfile] = useState("");
-
+  const [imageFile, setImageFile] = useState(userProfileData.image);
+  const VisuallyHiddenInput = styled("input")({
+    clip: "rect(0 0 0 0)",
+    clipPath: "inset(50%)",
+    height: 1,
+    overflow: "hidden",
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    whiteSpace: "nowrap",
+    width: 1,
+  });
   useEffect(() => {
     const token = localStorage.getItem("jwt");
     if (token) {
@@ -39,15 +53,28 @@ function UserProfileCard({ userProfileData, currentUserId }) {
 
   const handleSubmit = async () => {
     try {
+      const formData = new FormData();
+      if (imageFile) {
+        formData.append("image", imageFile);
+      }
+      formData.append("data", JSON.stringify(userBioData));
+      // if (imageFile) {
+      //   formData.append("image", imageFile);
+      // }
+
+      console.log("Request Data: ", {
+        userBioData,
+        imageFile,
+      }); // Log the request data
+
       const response = await fetch(
         `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}`,
         {
           method: "PATCH",
           headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${tokenProfile}`,
           },
-          body: JSON.stringify(userBioData),
+          body: formData,
         }
       );
 
@@ -63,6 +90,10 @@ function UserProfileCard({ userProfileData, currentUserId }) {
     } catch (error) {
       console.error("Failed to update profile:", error);
     }
+  };
+
+  const handleImageChange = (e) => {
+    setImageFile(e.target.files[0]);
   };
 
   return (
@@ -84,7 +115,10 @@ function UserProfileCard({ userProfileData, currentUserId }) {
 
       <Box display="flex" alignItems="center" justifyContent="center" mb={4}>
         <Avatar
-          src="https://source.unsplash.com/random/150x150"
+          src={
+            handleImageDisplay(userBioData.image) ||
+            "https://source.unsplash.com/random/150x150"
+          }
           sx={{ width: 100, height: 100, boxShadow: 3 }}
         />
       </Box>
@@ -210,6 +244,47 @@ function UserProfileCard({ userProfileData, currentUserId }) {
               <TextField {...params} label="Languages" sx={{ mt: 2 }} />
             )}
           />
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              marginBottom: 2,
+              gap: 3,
+            }}
+          >
+            <Button
+              component="label"
+              role={undefined}
+              variant="outlined"
+              tabIndex={-1}
+              startIcon={<CloudUploadIcon />}
+            >
+              Upload files
+              <VisuallyHiddenInput
+                type="file"
+                accept="image/*" // Limit to image files only
+                onChange={handleImageChange}
+                multiple
+              />
+            </Button>
+            {/* <input
+              type="file"
+              onChange={handleImageChange}
+              accept="image/*"
+              style={{ marginTop: "16px", width: "100%" }}
+            /> */}
+            {/* <Avatar
+              src={handleImageDisplay(imageFile)}
+              alt="Image Preview"
+              sx={{
+                width: 100,
+                height: 100,
+                borderRadius: "50%",
+                boxShadow: 3,
+              }}
+            /> */}
+          </Box>
           <Button
             fullWidth
             variant="outlined"

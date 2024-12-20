@@ -29,12 +29,10 @@ const UserProfile = ({ token }) => {
           lookingFor: "",
         };
   });
-
   const [message, setMessage] = React.useState({
     type: "",
     text: "",
   });
-
   const [userData, setUserData] = React.useState(null);
   const [showUserBio, setShowUserBio] = React.useState(false);
 
@@ -107,6 +105,10 @@ const UserProfile = ({ token }) => {
   };
   const handleFileChange = (event) => {
     const file = event.target.files[0];
+
+    // Log the file information
+    console.log("User selected file:", file);
+
     setFormData((prev) => ({ ...prev, image: file }));
     if (file) {
       const imageURL = URL.createObjectURL(file);
@@ -115,8 +117,16 @@ const UserProfile = ({ token }) => {
   };
 
   const updateUserBio = async () => {
-    const { city, age, gender, languages, hobbies, aboutme, lookingFor } =
-      formData;
+    const {
+      city,
+      age,
+      gender,
+      languages,
+      hobbies,
+      aboutme,
+      lookingFor,
+      image,
+    } = formData;
 
     const languageArray = languages
       ? languages.split(",").map((lang) => lang.trim())
@@ -134,8 +144,13 @@ const UserProfile = ({ token }) => {
       aboutme: aboutme || "",
       lookingFor,
       isBioProvided: true,
-      // bioProvided: true,
     };
+
+    const formDataToSend = new FormData();
+    formDataToSend.append("data", JSON.stringify(userBioData));
+    if (image) {
+      formDataToSend.append("image", image);
+    }
 
     try {
       const response = await fetch(
@@ -143,12 +158,12 @@ const UserProfile = ({ token }) => {
         {
           method: "PATCH",
           headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(userBioData),
+          body: formDataToSend,
         }
       );
+
       if (response.status === 401) {
         navigate("/");
       }
@@ -264,42 +279,43 @@ const UserProfile = ({ token }) => {
                 value={formData.lookingFor}
                 onChange={handleInputChange}
               />
-              {formData.imagePreview && (
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    marginBottom: 2,
-                    gap: 3,
-                  }}
+              {/* {formData.imagePreview && ( */}
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  marginBottom: 2,
+                  gap: 3,
+                }}
+              >
+                <Button
+                  component="label"
+                  role={undefined}
+                  variant="outlined"
+                  tabIndex={-1}
+                  startIcon={<CloudUploadIcon />}
                 >
-                  <Button
-                    component="label"
-                    role={undefined}
-                    variant="outlined"
-                    tabIndex={-1}
-                    startIcon={<CloudUploadIcon />}
-                  >
-                    Upload files
-                    <VisuallyHiddenInput
-                      type="file"
-                      onChange={(event) => console.log(event.target.files)}
-                      multiple
-                    />
-                  </Button>
-                  <Avatar
-                    src={formData.imagePreview}
-                    alt="Image Preview"
-                    sx={{
-                      width: 100,
-                      height: 100,
-                      borderRadius: "50%",
-                      boxShadow: 3,
-                    }}
-                  />{" "}
-                </Box>
-              )}
+                  Upload files
+                  <VisuallyHiddenInput
+                    type="file"
+                    accept="image/*" // Limit to image files only
+                    onChange={handleFileChange}
+                    multiple
+                  />
+                </Button>
+                <Avatar
+                  src={formData.imagePreview}
+                  alt="Image Preview"
+                  sx={{
+                    width: 100,
+                    height: 100,
+                    borderRadius: "50%",
+                    boxShadow: 3,
+                  }}
+                />
+              </Box>
+              ;{/* )} */}
               <Box
                 sx={{
                   display: "flex",

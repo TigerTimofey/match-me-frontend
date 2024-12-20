@@ -27,6 +27,8 @@ import Face3Icon from "@mui/icons-material/Face3";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import FingerprintIcon from "@mui/icons-material/Fingerprint";
 
+import { handleImageDisplay } from "../utils/handleImageDisplay";
+
 function MainComponent() {
   const theme = useTheme();
   const sm = useMediaQuery(theme.breakpoints.down("sm"));
@@ -202,6 +204,7 @@ function MainComponent() {
         break;
     }
   };
+
   return (
     <Box sx={{ display: "flex" }}>
       <Drawer
@@ -244,7 +247,7 @@ function MainComponent() {
             </Typography>
 
             <Avatar
-              src={userData?.avatarUrl}
+              src={handleImageDisplay(userData?.image)}
               sx={{
                 width: 35,
                 height: 35,

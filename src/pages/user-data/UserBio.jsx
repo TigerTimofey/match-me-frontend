@@ -14,6 +14,7 @@ import { hobbiesDb } from "../../local-variables/hobbies";
 function UserBioCard({ userBioData }) {
   const [open, setOpen] = React.useState(false);
   const [bioData, setBioData] = React.useState(userBioData);
+  const [imageFile, setImageFile] = React.useState(null); // State for image file
   const [message, setMessage] = React.useState({
     type: "",
     text: "",
@@ -24,8 +25,14 @@ function UserBioCard({ userBioData }) {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-
     setBioData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleImageChange = (e) => {
+    const newImageFile = e.target.files[0];
+    if (newImageFile) {
+      setImageFile(newImageFile);
+    }
   };
 
   const handleSubmit = async () => {
@@ -46,15 +53,21 @@ function UserBioCard({ userBioData }) {
         age: Number(restOfBioData.age),
       };
 
+      const formData = new FormData();
+
+      if (imageFile) {
+        formData.append("image", imageFile);
+      }
+      formData.append("data", JSON.stringify(userBioData));
+
       const response = await fetch(
         `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}`,
         {
           method: "PATCH",
           headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(userBioData),
+          body: formData,
         }
       );
 
@@ -186,7 +199,7 @@ function UserBioCard({ userBioData }) {
               {message.text}
             </Alert>
           )}
-          <TextField
+          {/* <TextField
             fullWidth
             label="First Name"
             name="name"
@@ -201,7 +214,7 @@ function UserBioCard({ userBioData }) {
             value={bioData.lastname}
             onChange={handleInputChange}
             sx={{ mb: 2 }}
-          />
+          /> */}
           <TextField
             fullWidth
             label="Age"
@@ -214,14 +227,15 @@ function UserBioCard({ userBioData }) {
           <TextField
             select
             name="gender"
-            label="Gender"
             variant="outlined"
             fullWidth
             value={bioData.gender}
             onChange={handleInputChange}
             sx={{ mb: 2 }}
-            SelectProps={{
-              native: true,
+            slotProps={{
+              select: {
+                native: true,
+              },
             }}
           >
             <option value="Male">Male</option>

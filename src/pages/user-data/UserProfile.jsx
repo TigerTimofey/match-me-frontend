@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   Typography,
   Avatar,
@@ -13,15 +13,14 @@ import {
 
 import { languages } from "../../local-variables/languages";
 import { handleImageDisplay } from "../../utils/handleImageDisplay";
-import { base64ToFile } from "../../utils/base64ToFile";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import { styled } from "@mui/material";
 
 function UserProfileCard({ userProfileData, currentUserId }) {
-  const [open, setOpen] = useState(false);
-  const [userBioData, setUserBioData] = useState(userProfileData);
-  const [tokenProfile, setTokenProfile] = useState("");
-  const [imageFile, setImageFile] = useState(userProfileData.image);
+  const [open, setOpen] = React.useState(false);
+  const [userBioData, setUserBioData] = React.useState(userProfileData);
+  const [tokenProfile, setTokenProfile] = React.useState("");
+  const [imageFile, setImageFile] = React.useState(userProfileData.image);
   const VisuallyHiddenInput = styled("input")({
     clip: "rect(0 0 0 0)",
     clipPath: "inset(50%)",
@@ -33,7 +32,7 @@ function UserProfileCard({ userProfileData, currentUserId }) {
     whiteSpace: "nowrap",
     width: 1,
   });
-  useEffect(() => {
+  React.useEffect(() => {
     const token = localStorage.getItem("jwt");
     if (token) {
       setTokenProfile(token);
@@ -56,11 +55,10 @@ function UserProfileCard({ userProfileData, currentUserId }) {
     try {
       const formData = new FormData();
 
-      // Передача только тех данных, которые были изменены
       formData.append(
         "data",
         JSON.stringify({
-          name: userBioData.name, // Передаем только измененные данные
+          name: userBioData.name,
           lastname: userBioData.lastname,
           aboutme: userBioData.aboutme,
           lookingFor: userBioData.lookingFor,
@@ -275,7 +273,7 @@ function UserProfileCard({ userProfileData, currentUserId }) {
               Upload files
               <VisuallyHiddenInput
                 type="file"
-                accept="image/*" // Limit to image files only
+                accept="image/*"
                 onChange={handleImageChange}
                 multiple
               />

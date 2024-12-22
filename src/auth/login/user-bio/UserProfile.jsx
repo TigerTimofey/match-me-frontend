@@ -106,7 +106,6 @@ const UserProfile = ({ token }) => {
   const handleFileChange = (event) => {
     const file = event.target.files[0];
 
-    // Log the file information
     console.log("User selected file:", file);
 
     setFormData((prev) => ({ ...prev, image: file }));

@@ -8,8 +8,10 @@ import {
   TextField,
   Alert,
   Autocomplete,
+  Chip,
 } from "@mui/material";
 import { hobbiesDb } from "../../local-variables/hobbies";
+import { languages } from "../../local-variables/languages";
 
 function UserBioCard({ userBioData }) {
   const [open, setOpen] = React.useState(false);
@@ -33,6 +35,10 @@ function UserBioCard({ userBioData }) {
     if (newImageFile) {
       setImageFile(newImageFile);
     }
+  };
+
+  const handleMultiSelectChange = (event, newValue) => {
+    setBioData((prev) => ({ ...prev, languages: newValue }));
   };
 
   const handleSubmit = async () => {
@@ -110,36 +116,54 @@ function UserBioCard({ userBioData }) {
       </Typography>
       <Divider sx={{ my: 2, borderColor: "black", width: "80%" }} />
 
-      <Typography variant="h5" align="center" sx={{ fontWeight: 600 }}>
+      <Typography variant="h5" align="center" sx={{ fontWeight: 600, mt: 2 }}>
         {bioData.name} {bioData.lastname}
       </Typography>
 
-      <Typography variant="body1" align="center" sx={{ mt: 2 }}>
-        Age: {bioData.age}
+      <Typography variant="h6" align="center" sx={{ fontWeight: 600, mt: 2 }}>
+        Age
+      </Typography>
+      <Typography variant="body1 " align="center">
+        {bioData.age}
       </Typography>
 
+      <Typography variant="h6" align="center" sx={{ fontWeight: 600, mt: 2 }}>
+        Gender{" "}
+      </Typography>
       <Typography variant="body1" align="center">
-        Gender: {bioData.gender}
+        {bioData.gender}
       </Typography>
-
+      <Typography variant="h6" align="center" sx={{ fontWeight: 600, mt: 2 }}>
+        City{" "}
+      </Typography>
       <Typography variant="body1" align="center">
-        City: {bioData.city}
+        {bioData.city}
       </Typography>
 
-      <Divider sx={{ my: 4 }} />
-
-      <Typography variant="h5" align="center" sx={{ fontWeight: 600 }}>
+      <Typography variant="h6" align="center" sx={{ fontWeight: 600, mt: 2 }}>
         Hobbies
       </Typography>
 
       <Typography variant="body1" align="center">
         {bioData.hobbies?.join(", ") || ""}
       </Typography>
-
+      <Typography variant="h6" align="center" sx={{ fontWeight: 600, mt: 2 }}>
+        Languages
+      </Typography>
+      <Box>
+        {bioData.languages.map((lang, index) => (
+          <Chip
+            key={index}
+            label={languages[lang]}
+            sx={{ m: 0.5, fontSize: "2rem" }}
+          />
+        ))}
+      </Box>
       <Box sx={{ position: "absolute", top: 16, right: 16 }}>
         <Button
           variant="contained"
           color="primary"
+          size="small"
           sx={{
             backgroundColor: "rgb(44,44,44)",
             color: "#f4f3f3",
@@ -262,6 +286,16 @@ function UserBioCard({ userBioData }) {
             }
             renderInput={(params) => (
               <TextField {...params} label="Hobbies" sx={{ mt: 2 }} />
+            )}
+          />
+
+          <Autocomplete
+            multiple
+            options={Object.keys(languages)}
+            value={bioData.languages}
+            onChange={handleMultiSelectChange}
+            renderInput={(params) => (
+              <TextField {...params} label="Languages" sx={{ mt: 2 }} />
             )}
           />
 

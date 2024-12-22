@@ -11,7 +11,7 @@ import {
   Chip,
 } from "@mui/material";
 
-import { languages } from "../../local-variables/languages";
+// import { languages } from "../../local-variables/languages";
 import { handleImageDisplay } from "../../utils/handleImageDisplay";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import { styled } from "@mui/material";
@@ -47,9 +47,9 @@ function UserProfileCard({ userProfileData, currentUserId }) {
     setUserBioData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleMultiSelectChange = (event, newValue) => {
-    setUserBioData((prev) => ({ ...prev, languages: newValue }));
-  };
+  // const handleMultiSelectChange = (event, newValue) => {
+  //   setUserBioData((prev) => ({ ...prev, languages: newValue }));
+  // };
 
   const handleSubmit = async () => {
     try {
@@ -62,7 +62,7 @@ function UserProfileCard({ userProfileData, currentUserId }) {
           lastname: userBioData.lastname,
           aboutme: userBioData.aboutme,
           lookingFor: userBioData.lookingFor,
-          languages: userBioData.languages,
+          // languages: userBioData.languages,
         })
       );
 
@@ -74,7 +74,7 @@ function UserProfileCard({ userProfileData, currentUserId }) {
         lastname: userBioData.lastname,
         aboutme: userBioData.aboutme,
         lookingFor: userBioData.lookingFor,
-        languages: userBioData.languages,
+        // languages: userBioData.languages,
         image: imageFile ? imageFile.name : "No image",
       });
       const response = await fetch(
@@ -132,19 +132,19 @@ function UserProfileCard({ userProfileData, currentUserId }) {
         />
       </Box>
 
-      <Typography variant="h5" align="center" sx={{ fontWeight: 600 }}>
+      <Typography variant="h5" align="center" sx={{ fontWeight: 600, mb: 3 }}>
         {userBioData.name} {userBioData.lastname}
       </Typography>
 
-      <Typography variant="h5" align="center" sx={{ fontWeight: 600 }}>
+      <Typography variant="h6" align="center" sx={{ fontWeight: 600 }}>
         About me
       </Typography>
       <Typography variant="body1" align="center" sx={{ mt: 2 }}>
         {userBioData.aboutme}
       </Typography>
 
-      <Divider sx={{ my: 4 }} />
-      <Typography variant="h5" align="center" sx={{ fontWeight: 600 }}>
+      {/* <Divider sx={{ my: 4 }} /> */}
+      <Typography variant="h6" align="center" sx={{ fontWeight: 600, mt: 3 }}>
         Looking for
       </Typography>
 
@@ -153,7 +153,7 @@ function UserProfileCard({ userProfileData, currentUserId }) {
       </Typography>
       <Divider sx={{ my: 4 }} />
 
-      <Typography variant="h5" align="center" sx={{ fontWeight: 600 }}>
+      {/* <Typography variant="h6" align="center" sx={{ fontWeight: 600 }}>
         Languages
       </Typography>
       <Box sx={{ mt: 2 }}>
@@ -164,12 +164,13 @@ function UserProfileCard({ userProfileData, currentUserId }) {
             sx={{ m: 0.5, fontSize: "2.5rem" }}
           />
         ))}
-      </Box>
+      </Box> */}
 
       <Box sx={{ position: "absolute", top: 16, right: 16 }}>
         <Button
           variant="contained"
           color="primary"
+          size="small"
           sx={{
             backgroundColor: "rgb(44,44,44)",
             color: "#f4f3f3",
@@ -244,7 +245,7 @@ function UserProfileCard({ userProfileData, currentUserId }) {
             onChange={handleChange}
             sx={{ mb: 2 }}
           />
-          <Autocomplete
+          {/* <Autocomplete
             multiple
             options={Object.keys(languages)}
             value={userBioData.languages}
@@ -252,7 +253,7 @@ function UserProfileCard({ userProfileData, currentUserId }) {
             renderInput={(params) => (
               <TextField {...params} label="Languages" sx={{ mt: 2 }} />
             )}
-          />
+          /> */}
           <Box
             sx={{
               display: "flex",

@@ -144,6 +144,7 @@ const UserProfile = ({ token }) => {
       aboutme: aboutme || "",
       lookingFor,
       isBioProvided: true,
+      bioProvided: true,
     };
 
     const formDataToSend = new FormData();
@@ -315,7 +316,7 @@ const UserProfile = ({ token }) => {
                   }}
                 />
               </Box>
-              ;{/* )} */}
+
               <Box
                 sx={{
                   display: "flex",

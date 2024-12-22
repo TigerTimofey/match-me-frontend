@@ -13,6 +13,7 @@ import {
 
 import { languages } from "../../local-variables/languages";
 import { handleImageDisplay } from "../../utils/handleImageDisplay";
+import { base64ToFile } from "../../utils/base64ToFile";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import { styled } from "@mui/material";
 
@@ -54,19 +55,30 @@ function UserProfileCard({ userProfileData, currentUserId }) {
   const handleSubmit = async () => {
     try {
       const formData = new FormData();
+
+      // Передача только тех данных, которые были изменены
+      formData.append(
+        "data",
+        JSON.stringify({
+          name: userBioData.name, // Передаем только измененные данные
+          lastname: userBioData.lastname,
+          aboutme: userBioData.aboutme,
+          lookingFor: userBioData.lookingFor,
+          languages: userBioData.languages,
+        })
+      );
+
       if (imageFile) {
         formData.append("image", imageFile);
       }
-      formData.append("data", JSON.stringify(userBioData));
-      // if (imageFile) {
-      //   formData.append("image", imageFile);
-      // }
-
-      console.log("Request Data: ", {
-        userBioData,
-        imageFile,
-      }); // Log the request data
-
+      console.log("Sending data:", {
+        name: userBioData.name,
+        lastname: userBioData.lastname,
+        aboutme: userBioData.aboutme,
+        lookingFor: userBioData.lookingFor,
+        languages: userBioData.languages,
+        image: imageFile ? imageFile.name : "No image",
+      });
       const response = await fetch(
         `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}`,
         {
@@ -82,7 +94,6 @@ function UserProfileCard({ userProfileData, currentUserId }) {
         handleClose();
         const updatedData = await response.json();
         setUserBioData(updatedData);
-        console.log("Updated Profile Data:", updatedData);
       } else {
         const errorData = await response.json();
         console.error("Failed to update profile:", errorData);
@@ -251,6 +262,7 @@ function UserProfileCard({ userProfileData, currentUserId }) {
               alignItems: "center",
               marginBottom: 2,
               gap: 3,
+              mt: 3,
             }}
           >
             <Button

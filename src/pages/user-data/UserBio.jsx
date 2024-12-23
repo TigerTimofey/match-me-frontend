@@ -65,6 +65,10 @@ function UserBioCard({ userBioData }) {
         formData.append("image", imageFile);
       }
       formData.append("data", JSON.stringify(userBioData));
+      console.log("Data being sent to backend:", {
+        formData,
+        userBioData: JSON.stringify(userBioData),
+      });
 
       const response = await fetch(
         `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}`,

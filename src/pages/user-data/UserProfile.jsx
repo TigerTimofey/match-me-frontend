@@ -14,6 +14,7 @@ import {
 // import { languages } from "../../local-variables/languages";
 import { handleImageDisplay } from "../../utils/handleImageDisplay";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
 import { styled } from "@mui/material";
 
 function UserProfileCard({ userProfileData, currentUserId }) {
@@ -21,6 +22,57 @@ function UserProfileCard({ userProfileData, currentUserId }) {
   const [userBioData, setUserBioData] = React.useState(userProfileData);
   const [tokenProfile, setTokenProfile] = React.useState("");
   const [imageFile, setImageFile] = React.useState(userProfileData.image);
+  const [deleteButtonText, setDeleteButtonText] = React.useState("Delete");
+  const [changeButtonText, setChangeButtonText] = React.useState("Change");
+  const handleDeleteClick = async () => {
+    try {
+      setDeleteButtonText("Deleted");
+
+      const formData = new FormData();
+      formData.append(
+        "data",
+        JSON.stringify({
+          name: userBioData.name,
+          lastname: userBioData.lastname,
+          aboutme: userBioData.aboutme,
+          lookingFor: userBioData.lookingFor,
+          image: null,
+        })
+      );
+      // formData.append("image", null);
+      // console.log(formData);
+
+      const response = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${tokenProfile}`,
+          },
+          body: formData,
+        }
+      );
+
+      if (response.ok) {
+        const updatedData = await response.json();
+        setUserBioData(updatedData);
+        setImageFile(null); // Update state to remove image locally
+      } else {
+        const errorData = await response.json();
+        console.error("Failed to delete image:", errorData);
+      }
+    } catch (error) {
+      console.error("Error deleting image:", error);
+    } finally {
+      setTimeout(() => setDeleteButtonText("Remove"), 1500);
+    }
+  };
+
+  const handleChangeClick = () => {
+    setChangeButtonText("Changed");
+    setTimeout(() => setChangeButtonText("Change"), 1500);
+  };
+
   const VisuallyHiddenInput = styled("input")({
     clip: "rect(0 0 0 0)",
     clipPath: "inset(50%)",
@@ -75,7 +127,7 @@ function UserProfileCard({ userProfileData, currentUserId }) {
         aboutme: userBioData.aboutme,
         lookingFor: userBioData.lookingFor,
         // languages: userBioData.languages,
-        image: imageFile ? imageFile.name : "No image",
+        image: imageFile ? imageFile.name : null,
       });
       const response = await fetch(
         `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}`,
@@ -102,6 +154,7 @@ function UserProfileCard({ userProfileData, currentUserId }) {
   };
 
   const handleImageChange = (e) => {
+    handleChangeClick();
     setImageFile(e.target.files[0]);
   };
 
@@ -266,12 +319,18 @@ function UserProfileCard({ userProfileData, currentUserId }) {
           >
             <Button
               component="label"
+              size="small"
+              color="danger"
               role={undefined}
               variant="outlined"
               tabIndex={-1}
               startIcon={<CloudUploadIcon />}
+              // onClick={handleChangeClick}
+              sx={{
+                color: changeButtonText === "Changed" ? "green" : "danger",
+              }}
             >
-              Upload files
+              {changeButtonText}
               <VisuallyHiddenInput
                 type="file"
                 accept="image/*"
@@ -279,6 +338,20 @@ function UserProfileCard({ userProfileData, currentUserId }) {
                 multiple
               />
             </Button>
+            <Button
+              component="label"
+              size="small"
+              variant="outlined"
+              color="danger"
+              startIcon={<DeleteRoundedIcon />}
+              onClick={handleDeleteClick}
+              sx={{
+                color: deleteButtonText === "Deleted" ? "red" : "danger",
+              }}
+            >
+              {deleteButtonText}
+            </Button>
+
             {/* <input
               type="file"
               onChange={handleImageChange}

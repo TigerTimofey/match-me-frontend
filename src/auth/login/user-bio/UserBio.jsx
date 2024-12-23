@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import UserProfile from "./UserProfile";
 import { languages } from "../../../local-variables/languages";
 import { hobbiesDb } from "../../../local-variables/hobbies";
+import { locations } from "../../../local-variables/locations";
 
 const UserBio = ({ token }) => {
   const [formData, setFormData] = React.useState({
@@ -164,13 +165,33 @@ const UserBio = ({ token }) => {
                 gap: 2,
               }}
             >
-              <TextField
+              {/* <TextField
                 name="city"
                 label="City"
                 variant="outlined"
                 fullWidth
                 value={formData.city}
                 onChange={handleInputChange}
+              /> */}
+              <Autocomplete
+                options={Object.keys(locations)}
+                getOptionLabel={(option) => (option ? locations[option] : "")} // Ensure it handles undefined or empty string
+                value={formData.city || ""}
+                onChange={(event, newValue) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    city: newValue || "",
+                  }));
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="City"
+                    variant="outlined"
+                    fullWidth
+                    sx={{ mb: 2 }}
+                  />
+                )}
               />
               <TextField
                 name="age"

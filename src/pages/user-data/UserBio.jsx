@@ -12,11 +12,11 @@ import {
 } from "@mui/material";
 import { hobbiesDb } from "../../local-variables/hobbies";
 import { languages } from "../../local-variables/languages";
+import { locations } from "../../local-variables/locations";
 
 function UserBioCard({ userBioData }) {
   const [open, setOpen] = React.useState(false);
   const [bioData, setBioData] = React.useState(userBioData);
-  const [imageFile, setImageFile] = React.useState(null); // State for image file
   const [message, setMessage] = React.useState({
     type: "",
     text: "",
@@ -28,13 +28,6 @@ function UserBioCard({ userBioData }) {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setBioData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleImageChange = (e) => {
-    const newImageFile = e.target.files[0];
-    if (newImageFile) {
-      setImageFile(newImageFile);
-    }
   };
 
   const handleMultiSelectChange = (event, newValue) => {
@@ -61,9 +54,6 @@ function UserBioCard({ userBioData }) {
 
       const formData = new FormData();
 
-      if (imageFile) {
-        formData.append("image", imageFile);
-      }
       formData.append("data", JSON.stringify(userBioData));
       console.log("Data being sent to backend:", {
         formData,
@@ -227,22 +217,7 @@ function UserBioCard({ userBioData }) {
               {message.text}
             </Alert>
           )}
-          {/* <TextField
-            fullWidth
-            label="First Name"
-            name="name"
-            value={bioData.name}
-            onChange={handleInputChange}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            fullWidth
-            label="Last Name"
-            name="lastname"
-            value={bioData.lastname}
-            onChange={handleInputChange}
-            sx={{ mb: 2 }}
-          /> */}
+
           <TextField
             fullWidth
             label="Age"
@@ -270,14 +245,27 @@ function UserBioCard({ userBioData }) {
             <option value="Female">Female</option>
             <option value="Prefer not to say">Prefer not to say</option>
           </TextField>
-          <TextField
-            fullWidth
-            label="City"
-            name="city"
-            value={bioData.city}
-            onChange={handleInputChange}
-            sx={{ mb: 2 }}
+          <Autocomplete
+            options={Object.keys(locations)}
+            getOptionLabel={(option) => (option ? locations[option] : "")} // Ensure it handles undefined or empty string
+            value={bioData.city || ""}
+            onChange={(event, newValue) => {
+              setBioData((prev) => ({
+                ...prev,
+                city: newValue || "",
+              }));
+            }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="City"
+                variant="outlined"
+                fullWidth
+                sx={{ mb: 2 }}
+              />
+            )}
           />
+
           <Autocomplete
             multiple
             options={Object.keys(hobbiesDb)}

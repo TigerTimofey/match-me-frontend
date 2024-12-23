@@ -141,6 +141,7 @@ const RegisterPage = () => {
               severity={message.type}
               sx={{
                 marginBottom: 2,
+                textAlign: "center",
                 backgroundColor:
                   message.type === "danger"
                     ? "#f8d7da"

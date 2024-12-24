@@ -7,14 +7,12 @@ import {
   Modal,
   Box,
   TextField,
-  Autocomplete,
-  Chip,
 } from "@mui/material";
 
-// import { languages } from "../../local-variables/languages";
 import { handleImageDisplay } from "../../utils/handleImageDisplay";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
+
 import { styled } from "@mui/material";
 
 function UserProfileCard({ userProfileData, currentUserId }) {
@@ -84,6 +82,7 @@ function UserProfileCard({ userProfileData, currentUserId }) {
     whiteSpace: "nowrap",
     width: 1,
   });
+
   React.useEffect(() => {
     const token = localStorage.getItem("jwt");
     if (token) {
@@ -92,16 +91,14 @@ function UserProfileCard({ userProfileData, currentUserId }) {
   }, []);
 
   const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
+  const handleClose = () => {
+    setOpen(false);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setUserBioData((prev) => ({ ...prev, [name]: value }));
   };
-
-  // const handleMultiSelectChange = (event, newValue) => {
-  //   setUserBioData((prev) => ({ ...prev, languages: newValue }));
-  // };
 
   const handleSubmit = async () => {
     try {
@@ -114,7 +111,6 @@ function UserProfileCard({ userProfileData, currentUserId }) {
           lastname: userBioData.lastname,
           aboutme: userBioData.aboutme,
           lookingFor: userBioData.lookingFor,
-          // languages: userBioData.languages,
         })
       );
 
@@ -126,7 +122,6 @@ function UserProfileCard({ userProfileData, currentUserId }) {
         lastname: userBioData.lastname,
         aboutme: userBioData.aboutme,
         lookingFor: userBioData.lookingFor,
-        // languages: userBioData.languages,
         image: imageFile ? imageFile.name : null,
       });
       const response = await fetch(
@@ -205,19 +200,6 @@ function UserProfileCard({ userProfileData, currentUserId }) {
         {userBioData.lookingFor}
       </Typography>
       <Divider sx={{ my: 4 }} />
-
-      {/* <Typography variant="h6" align="center" sx={{ fontWeight: 600 }}>
-        Languages
-      </Typography>
-      <Box sx={{ mt: 2 }}>
-        {userBioData.languages.map((lang, index) => (
-          <Chip
-            key={index}
-            label={languages[lang]}
-            sx={{ m: 0.5, fontSize: "2.5rem" }}
-          />
-        ))}
-      </Box> */}
 
       <Box sx={{ position: "absolute", top: 16, right: 16 }}>
         <Button
@@ -298,15 +280,7 @@ function UserProfileCard({ userProfileData, currentUserId }) {
             onChange={handleChange}
             sx={{ mb: 2 }}
           />
-          {/* <Autocomplete
-            multiple
-            options={Object.keys(languages)}
-            value={userBioData.languages}
-            onChange={handleMultiSelectChange}
-            renderInput={(params) => (
-              <TextField {...params} label="Languages" sx={{ mt: 2 }} />
-            )}
-          /> */}
+
           <Box
             sx={{
               display: "flex",

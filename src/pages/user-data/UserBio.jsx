@@ -14,7 +14,7 @@ import { hobbiesDb } from "../../local-variables/hobbies";
 import { languages } from "../../local-variables/languages";
 import { locations } from "../../local-variables/locations";
 
-function UserBioCard({ userBioData }) {
+function UserBioCard({ userBioData, setUserBioData }) {
   const [open, setOpen] = React.useState(false);
   const [bioData, setBioData] = React.useState(userBioData);
   const [message, setMessage] = React.useState({
@@ -23,7 +23,9 @@ function UserBioCard({ userBioData }) {
   });
 
   const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
+  const handleClose = () => {
+    setOpen(false);
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -55,10 +57,8 @@ function UserBioCard({ userBioData }) {
       const formData = new FormData();
 
       formData.append("data", JSON.stringify(userBioData));
-      console.log("Data being sent to backend:", {
-        formData,
-        userBioData: JSON.stringify(userBioData),
-      });
+      console.log("Data being sent to backend:", userBioData);
+      setUserBioData(userBioData);
 
       const response = await fetch(
         `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}`,
@@ -169,6 +169,7 @@ function UserBioCard({ userBioData }) {
           Edit Bio
         </Button>
       </Box>
+
       <Modal
         open={open}
         onClose={handleClose}

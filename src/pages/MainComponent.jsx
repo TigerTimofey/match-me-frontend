@@ -49,7 +49,6 @@ function MainComponent() {
   const [activeMenu, setActiveMenu] = useState("Dashboard");
   const [hasCompleteBio, setHasCompleteBio] = useState(false);
 
-  console.log(hasCompleteBio);
   useEffect(() => {
     const token = localStorage.getItem("jwt");
     if (token) {
@@ -212,7 +211,7 @@ function MainComponent() {
   };
   useEffect(() => {
     if (userBioData) {
-      console.log("userBioData", userBioData);
+      // console.log("userBioData", userBioData);
       const isComplete = validateBioData(userBioData);
       setHasCompleteBio(isComplete);
     }

@@ -106,6 +106,7 @@ const Drawer = ({ userData, onSelectMenu, activeMenu }) => {
             justifyContent: "center",
             alignItems: "center",
             height: "100%",
+            pointer: "cursor",
           }}
         >
           <Divider

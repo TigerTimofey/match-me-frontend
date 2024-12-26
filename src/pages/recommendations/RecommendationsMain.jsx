@@ -33,16 +33,26 @@ function RecommendationsMain({ currentUserId }) {
       .map((user) => {
         let score = 0;
 
+        // Add 1 point for matching city
         if (user.city === currentUser.city) score++;
-        if (user.languages.some((lang) => currentUser.languages.includes(lang)))
-          score++;
-        if (user.hobbies.some((hobby) => currentUser.hobbies.includes(hobby)))
-          score++;
+
+        // Add points for each matching language
+        const languageMatches = user.languages.filter((lang) =>
+          currentUser.languages.includes(lang)
+        ).length;
+        score += languageMatches;
+
+        // Add points for each matching hobby
+        const hobbyMatches = user.hobbies.filter((hobby) =>
+          currentUser.hobbies.includes(hobby)
+        ).length;
+        score += hobbyMatches;
 
         return { id: user.id, score };
       });
 
-    console.log("Match scores for recommendations:", matchScores);
+    // Log scores for debugging
+    console.log("Match scores with detailed breakdown:", matchScores);
 
     // Sort matches by score in descending order
     const sortedMatches = matchScores

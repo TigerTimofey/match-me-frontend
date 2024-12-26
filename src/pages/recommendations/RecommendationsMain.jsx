@@ -28,43 +28,29 @@ function RecommendationsMain({ currentUserId }) {
       return [];
     }
 
-    const matchesByCity = userDetailsArray
-      .filter(
-        (user) => user.id !== currentUserId && user.city === currentUser.city
-      )
-      .map((user) => user.id);
+    const matchScores = userDetailsArray
+      .filter((user) => user.id !== currentUserId)
+      .map((user) => {
+        let score = 0;
 
-    console.log(`Matches by city for ${currentUserId}:`, matchesByCity);
+        if (user.city === currentUser.city) score++;
+        if (user.languages.some((lang) => currentUser.languages.includes(lang)))
+          score++;
+        if (user.hobbies.some((hobby) => currentUser.hobbies.includes(hobby)))
+          score++;
 
-    const matchesByLanguages = userDetailsArray
-      .filter(
-        (user) =>
-          user.id !== currentUserId &&
-          user.languages.some((lang) => currentUser.languages.includes(lang))
-      )
-      .map((user) => user.id);
+        return { id: user.id, score };
+      });
 
-    console.log(
-      `Matches by languages for ${currentUserId}:`,
-      matchesByLanguages
-    );
+    console.log("Match scores for recommendations:", matchScores);
 
-    const matchesByHobbies = userDetailsArray
-      .filter(
-        (user) =>
-          user.id !== currentUserId &&
-          user.hobbies.some((hobby) => currentUser.hobbies.includes(hobby))
-      )
-      .map((user) => user.id);
+    // Sort matches by score in descending order
+    const sortedMatches = matchScores
+      .filter(({ score }) => score > 0)
+      .sort((a, b) => b.score - a.score)
+      .map(({ id }) => id);
 
-    console.log(`Matches by hobbies for ${currentUserId}:`, matchesByHobbies);
-
-    // Combine matches from all steps and remove duplicates
-    const allMatches = Array.from(
-      new Set([...matchesByCity, ...matchesByLanguages, ...matchesByHobbies])
-    );
-
-    return allMatches;
+    return sortedMatches;
   };
 
   useEffect(() => {
@@ -139,6 +125,7 @@ function RecommendationsMain({ currentUserId }) {
 
     fetchAllData();
   }, [navigate]);
+
   useEffect(() => {
     if (matchedUserIds.length > 0) {
       const fetchRecommendedUserData = async () => {

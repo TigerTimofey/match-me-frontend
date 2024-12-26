@@ -402,7 +402,7 @@ function MainComponent() {
           )}
           {activeMenu === "Recommend" &&
             (hasCompleteBio ? (
-              <RecommendationsMain />
+              <RecommendationsMain currentUserId={userData.id} />
             ) : (
               <Box sx={{ position: "relative", textAlign: "center" }}>
                 <Typography

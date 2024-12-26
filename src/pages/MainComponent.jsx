@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-// import { jwtDecode } from "jwt-decode";
+
 import {
   Box,
   Alert,
@@ -14,6 +14,7 @@ import {
   CircularProgress,
   useMediaQuery,
   useTheme,
+  Button,
 } from "@mui/material";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import UserDetailsCard from "./user-data/UserDetails";
@@ -21,19 +22,23 @@ import UserProfileCard from "./user-data/UserProfile";
 import UserBioCard from "./user-data/UserBio";
 import Drawer from "./components/Drawer";
 
+import RecommendationsMain from "./recommendations/RecommendationsMain";
+
 import EarbudsTwoToneIcon from "@mui/icons-material/EarbudsTwoTone";
 import FaceIcon from "@mui/icons-material/Face";
 import Face3Icon from "@mui/icons-material/Face3";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import FingerprintIcon from "@mui/icons-material/Fingerprint";
 
+import { handleImageDisplay } from "../utils/handleImageDisplay";
+
 function MainComponent() {
   const theme = useTheme();
   const sm = useMediaQuery(theme.breakpoints.down("sm"));
 
   const navigate = useNavigate();
-  const [anchorEl, setAnchorEl] = useState(null);
 
+  const [anchorEl, setAnchorEl] = useState(null);
   const [userData, setUserData] = useState(null);
   const [userBioData, setUserBioData] = useState(null);
   const [userProfileData, setUserProfileData] = useState(null);
@@ -42,6 +47,7 @@ function MainComponent() {
   const [modalContent, setModalContent] = useState(null);
   const [loading, setLoading] = useState(false);
   const [activeMenu, setActiveMenu] = useState("Dashboard");
+  const [hasCompleteBio, setHasCompleteBio] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem("jwt");
@@ -49,7 +55,7 @@ function MainComponent() {
       const fetchUserDetails = async () => {
         try {
           const response = await fetch(
-            `${process.env.REACT_APP_SERVER_URL}/api/auth/me`,
+            `${process.env.REACT_APP_SERVER_URL}/api/users/me`,
             {
               method: "GET",
               headers: {
@@ -110,11 +116,11 @@ function MainComponent() {
 
     switch (menuItem) {
       case "Profile":
-        endpoint = "/api/auth/me/profile";
+        endpoint = "/api/users/me/profile";
         setModalContent("Profile");
         break;
       case "Bio":
-        endpoint = "/api/auth/me/bio";
+        endpoint = "/api/users/me/bio";
         setModalContent("Bio");
         break;
       default:
@@ -180,6 +186,42 @@ function MainComponent() {
     setModalOpen(false);
     setModalContent(null);
   };
+
+  const validateBioData = (data) => {
+    const requiredFields = [
+      "name",
+      "lastname",
+      "gender",
+      "age",
+      "city",
+      "hobbies",
+      "languages",
+    ];
+
+    return requiredFields.every((field) => {
+      const value = data[field];
+      if (field === "image") {
+        return value && value.trim().length > 0;
+      }
+      if (Array.isArray(value)) {
+        return value.length > 0;
+      }
+      return value && value.toString().trim().length > 0;
+    });
+  };
+  useEffect(() => {
+    if (userBioData) {
+      // console.log("userBioData", userBioData);
+      const isComplete = validateBioData(userBioData);
+      setHasCompleteBio(isComplete);
+    }
+  }, [userBioData]);
+  useEffect(() => {
+    if (activeMenu === "Recommend" && userBioData) {
+      setHasCompleteBio(validateBioData(userBioData));
+    }
+  }, [activeMenu, userBioData]);
+
   const handleDrawerMenuSelect = (menu, data) => {
     setActiveMenu(menu);
     switch (menu) {
@@ -189,6 +231,7 @@ function MainComponent() {
         break;
       case "Recommend":
         console.log("Recommend in main clicked");
+        <RecommendationsMain />;
         break;
       case "Chat":
         console.log("Chat  in main clicked");
@@ -201,6 +244,41 @@ function MainComponent() {
         break;
     }
   };
+
+  useEffect(() => {
+    const simulateBioFetch = async () => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem("jwt");
+        const response = await fetch(
+          `${process.env.REACT_APP_SERVER_URL}/api/users/me/bio`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch bio data");
+        }
+
+        const data = await response.json();
+        setUserBioData({ ...data, currentUserId: userData?.id });
+      } catch (error) {
+        console.error("Error simulating bio fetch:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (activeMenu === "Recommend" && !userBioData) {
+      simulateBioFetch();
+    }
+  }, [activeMenu, userBioData, userData]);
+
   return (
     <Box sx={{ display: "flex" }}>
       <Drawer
@@ -243,7 +321,7 @@ function MainComponent() {
             </Typography>
 
             <Avatar
-              src={userData?.avatarUrl}
+              src={handleImageDisplay(userData?.image)}
               sx={{
                 width: 35,
                 height: 35,
@@ -319,7 +397,53 @@ function MainComponent() {
               {message.text}
             </Alert>
           )}
-          {userData && <UserDetailsCard userData={userData} />}
+          {activeMenu === "Dashboard" && userData && (
+            <UserDetailsCard userData={userData} />
+          )}
+          {activeMenu === "Recommend" &&
+            (hasCompleteBio ? (
+              <RecommendationsMain currentUserId={userData.id} />
+            ) : (
+              <Box sx={{ position: "relative", textAlign: "center" }}>
+                <Typography
+                  color="error"
+                  sx={{
+                    backgroundColor: "rgb(125, 59, 59)",
+                    color: "#f4f3f3",
+                    borderRadius: 10,
+                    margin: 10,
+                    p: 3,
+                    fontWeight: 600,
+                    fontFamily: "Poppins",
+                  }}
+                >
+                  Please complete your profile to see recommendations.
+                </Typography>
+
+                {userBioData && (
+                  <Button
+                    onClick={() => {
+                      setModalContent("Bio");
+                      setModalOpen(true);
+                    }}
+                    // className="animate__animated animate__headShake animate__delay-2s"
+                    sx={{
+                      marginTop: "10px",
+                      padding: "10px 20px",
+                      backgroundColor: "rgb(44,44,44)",
+                      color: "#f4f3f3",
+                      fontWeight: 600,
+                      fontFamily: "Poppins",
+                      border: "none",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Complete Bio
+                  </Button>
+                )}
+              </Box>
+            ))}
         </Box>
       </Box>
       {/* Modal */}
@@ -349,11 +473,14 @@ function MainComponent() {
             <CircularProgress sx={{ display: "block", margin: "auto" }} />
           ) : modalContent === "Profile" && userProfileData ? (
             <UserProfileCard
-              curentUserId={userData?.id}
+              currentUserId={userData.id}
               userProfileData={userProfileData}
             />
           ) : modalContent === "Bio" && userBioData ? (
-            <UserBioCard curentUserId={userData.id} userBioData={userBioData} />
+            <UserBioCard
+              userBioData={userBioData}
+              setUserBioData={setUserBioData}
+            />
           ) : (
             <Typography>Loading...</Typography>
           )}

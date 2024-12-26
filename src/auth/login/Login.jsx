@@ -65,15 +65,14 @@ const LoginPage = () => {
 
       const token = await response.text();
       if (token) {
-        localStorage.clear(); // Clear old data
-        localStorage.setItem("jwt", token); // Store new JWT
+        localStorage.clear();
+        localStorage.setItem("jwt", token);
         setToken(token);
         console.log("Login successful, JWT stored.");
 
-        // Fetch user details to check isBioProvided
         try {
           const userDetailsResponse = await fetch(
-            `${process.env.REACT_APP_SERVER_URL}/api/auth/me`,
+            `${process.env.REACT_APP_SERVER_URL}/api/users/me`,
             {
               method: "GET",
               headers: {
@@ -82,7 +81,7 @@ const LoginPage = () => {
               },
             }
           );
-          // navigate to /me if alrey provided Bio
+
           if (userDetailsResponse.ok) {
             const userData = await userDetailsResponse.json();
 

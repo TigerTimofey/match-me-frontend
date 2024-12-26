@@ -90,7 +90,11 @@ const Drawer = ({ userData, onSelectMenu, activeMenu }) => {
               alignItems: "center",
             }}
           >
-            <ChevronRightIcon onClick={handleDrawerToggle} />
+            {drawerWidth === 70 ? (
+              <ChevronRightIcon onClick={handleDrawerToggle} />
+            ) : (
+              <ChevronLeftIcon onClick={handleDrawerToggle} />
+            )}
           </Typography>
         )}
 
@@ -102,6 +106,7 @@ const Drawer = ({ userData, onSelectMenu, activeMenu }) => {
             justifyContent: "center",
             alignItems: "center",
             height: "100%",
+            pointer: "cursor",
           }}
         >
           <Divider

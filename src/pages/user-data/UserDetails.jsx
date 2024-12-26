@@ -1,5 +1,6 @@
 import React from "react";
 import { Card, Typography, Avatar, Divider } from "@mui/material";
+import { handleImageDisplay } from "../../utils/handleImageDisplay";
 
 function UserDetailsCard({ userData }) {
   return (
@@ -16,6 +17,9 @@ function UserDetailsCard({ userData }) {
         margin: "auto",
         marginLeft: 2,
         marginRight: 2,
+        userSelect: "none",
+        WebkitUserSelect: "none",
+        msUserSelect: "none",
       }}
     >
       <Typography
@@ -33,8 +37,16 @@ function UserDetailsCard({ userData }) {
       </Typography>
       <Typography sx={{ textAlign: "center" }}>Age: {userData.age}</Typography>
       <Avatar
-        src={userData.avatarUrl}
-        sx={{ width: 56, height: 56, mt: 2, boxShadow: 1 }}
+        src={handleImageDisplay(userData.image)}
+        sx={{
+          width: 56,
+          height: 56,
+          mt: 2,
+          boxShadow: 1,
+          userSelect: "none",
+          WebkitUserSelect: "none",
+          msUserSelect: "none",
+        }}
       />
     </Card>
   );

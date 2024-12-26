@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   TextField,
   Button,
@@ -11,9 +11,11 @@ import {
 import { useNavigate } from "react-router-dom";
 import UserProfile from "./UserProfile";
 import { languages } from "../../../local-variables/languages";
+import { hobbiesDb } from "../../../local-variables/hobbies";
+import { locations } from "../../../local-variables/locations";
 
 const UserBio = ({ token }) => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = React.useState({
     city: "",
     age: "",
     gender: "",
@@ -23,25 +25,24 @@ const UserBio = ({ token }) => {
     lookingFor: "",
   });
 
-  const [message, setMessage] = useState({
+  const [message, setMessage] = React.useState({
     type: "",
     text: "",
   });
 
-  const [userData, setUserData] = useState(null);
   const [showUserProfile, setShowUserProfile] = React.useState(false);
 
   const navigate = useNavigate();
 
-  useEffect(() => {
+  React.useEffect(() => {
     localStorage.setItem("userBioForm", JSON.stringify(formData));
   }, [formData]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const fetchUserDetails = async () => {
       try {
         const response = await fetch(
-          `${process.env.REACT_APP_SERVER_URL}/api/auth/me`,
+          `${process.env.REACT_APP_SERVER_URL}/api/users/me`,
           {
             method: "GET",
             headers: {
@@ -64,7 +65,6 @@ const UserBio = ({ token }) => {
         }
 
         const data = await response.json();
-        setUserData(data); // Save the fetched user data
         setFormData({
           city: data.city || "",
           age: data.age || "",
@@ -84,7 +84,7 @@ const UserBio = ({ token }) => {
     };
 
     fetchUserDetails();
-  }, [token]);
+  }, [token, navigate]);
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
@@ -97,59 +97,6 @@ const UserBio = ({ token }) => {
     if (file) {
       const imageURL = URL.createObjectURL(file);
       setFormData((prev) => ({ ...prev, imagePreview: imageURL }));
-    }
-  };
-
-  const updateUserBio = async () => {
-    const { city, age, gender, languages, hobbies, aboutme, lookingFor } =
-      formData;
-
-    const languageArray = languages ? languages.split(",") : [];
-    const hobbyArray = hobbies ? hobbies.split(",") : [];
-
-    const userBioData = {
-      city,
-      age: Number(age),
-      gender,
-      languages: languageArray,
-      hobbies: hobbyArray,
-      aboutme: aboutme || "",
-      lookingFor,
-    };
-
-    try {
-      const response = await fetch(
-        `http://localhost:8080/api/auth/users/${userData.id}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(userBioData),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        setMessage({
-          type: "danger",
-          text: errorData.message || "Failed to update user bio.",
-        });
-        return;
-      }
-
-      const updatedData = await response.json();
-      setMessage({
-        type: "success",
-        text: "User bio updated successfully.",
-      });
-    } catch (error) {
-      console.error("Error updating user bio:", error);
-      setMessage({
-        type: "danger",
-        text: "Something went wrong while updating user bio.",
-      });
     }
   };
 
@@ -218,13 +165,33 @@ const UserBio = ({ token }) => {
                 gap: 2,
               }}
             >
-              <TextField
+              {/* <TextField
                 name="city"
                 label="City"
                 variant="outlined"
                 fullWidth
                 value={formData.city}
                 onChange={handleInputChange}
+              /> */}
+              <Autocomplete
+                options={Object.keys(locations)}
+                getOptionLabel={(option) => (option ? locations[option] : "")} // Ensure it handles undefined or empty string
+                value={formData.city || ""}
+                onChange={(event, newValue) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    city: newValue || "",
+                  }));
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="City"
+                    variant="outlined"
+                    fullWidth
+                    sx={{ mb: 2 }}
+                  />
+                )}
               />
               <TextField
                 name="age"
@@ -255,17 +222,9 @@ const UserBio = ({ token }) => {
                 <option value="Prefer not to say">Prefer not to say</option>
               </TextField>
 
-              {/* <TextField
-                name="languages"
-                label="Languages (comma-separated)"
-                variant="outlined"
-                fullWidth
-                value={formData.languages}
-                onChange={handleInputChange}
-              /> */}
               <Autocomplete
                 multiple
-                options={Object.keys(languages)} // Use keys from the languages object
+                options={Object.keys(languages)}
                 value={formData.languages ? formData.languages.split(",") : []}
                 onChange={(event, newValue) =>
                   setFormData((prev) => ({
@@ -282,7 +241,26 @@ const UserBio = ({ token }) => {
                   />
                 )}
               />
-
+              <Autocomplete
+                multiple
+                options={Object.keys(hobbiesDb)}
+                value={formData.hobbies ? formData.hobbies.split(",") : []}
+                onChange={(event, newValue) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    hobbies: newValue.join(", "),
+                  }))
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Hobbies"
+                    variant="outlined"
+                    fullWidth
+                  />
+                )}
+              />
+              {/* 
               <TextField
                 name="hobbies"
                 label="Hobbies (comma-separated)"
@@ -290,7 +268,7 @@ const UserBio = ({ token }) => {
                 fullWidth
                 value={formData.hobbies}
                 onChange={handleInputChange}
-              />
+              /> */}
 
               <Button
                 variant="contained"

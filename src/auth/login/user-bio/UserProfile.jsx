@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   TextField,
   Button,
@@ -14,7 +14,7 @@ import UserBio from "./UserBio";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 
 const UserProfile = ({ token }) => {
-  const [formData, setFormData] = useState(() => {
+  const [formData, setFormData] = React.useState(() => {
     const savedData = localStorage.getItem("userBioForm");
     return savedData
       ? JSON.parse(savedData)
@@ -29,13 +29,11 @@ const UserProfile = ({ token }) => {
           lookingFor: "",
         };
   });
-
-  const [message, setMessage] = useState({
+  const [message, setMessage] = React.useState({
     type: "",
     text: "",
   });
-
-  const [userData, setUserData] = useState(null);
+  const [userData, setUserData] = React.useState(null);
   const [showUserBio, setShowUserBio] = React.useState(false);
 
   const navigate = useNavigate();
@@ -50,15 +48,15 @@ const UserProfile = ({ token }) => {
     whiteSpace: "nowrap",
     width: 1,
   });
-  useEffect(() => {
+  React.useEffect(() => {
     localStorage.setItem("userBioForm", JSON.stringify(formData));
   }, [formData]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const fetchUserDetails = async () => {
       try {
         const response = await fetch(
-          `${process.env.REACT_APP_SERVER_URL}/api/auth/me`,
+          `${process.env.REACT_APP_SERVER_URL}/api/users/me`,
           {
             method: "GET",
             headers: {
@@ -93,14 +91,13 @@ const UserProfile = ({ token }) => {
     };
 
     fetchUserDetails();
-  }, [token]);
+  }, [token, navigate]);
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
     setFormData((prev) => ({
       ...prev,
       [name]:
-        //remove spaces
         name === "languages" || name === "hobbies"
           ? value.replace(/\s/g, "")
           : value,
@@ -108,6 +105,9 @@ const UserProfile = ({ token }) => {
   };
   const handleFileChange = (event) => {
     const file = event.target.files[0];
+
+    console.log("User selected file:", file);
+
     setFormData((prev) => ({ ...prev, image: file }));
     if (file) {
       const imageURL = URL.createObjectURL(file);
@@ -116,8 +116,16 @@ const UserProfile = ({ token }) => {
   };
 
   const updateUserBio = async () => {
-    const { city, age, gender, languages, hobbies, aboutme, lookingFor } =
-      formData;
+    const {
+      city,
+      age,
+      gender,
+      languages,
+      hobbies,
+      aboutme,
+      lookingFor,
+      image,
+    } = formData;
 
     const languageArray = languages
       ? languages.split(",").map((lang) => lang.trim())
@@ -135,20 +143,27 @@ const UserProfile = ({ token }) => {
       aboutme: aboutme || "",
       lookingFor,
       isBioProvided: true,
+      bioProvided: true,
     };
+
+    const formDataToSend = new FormData();
+    formDataToSend.append("data", JSON.stringify(userBioData));
+    if (image) {
+      formDataToSend.append("image", image);
+    }
 
     try {
       const response = await fetch(
-        `${process.env.REACT_APP_SERVER_URL}/api/auth/users/${userData.id}`,
+        `${process.env.REACT_APP_SERVER_URL}/api/users/${userData.id}`,
         {
           method: "PATCH",
           headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(userBioData),
+          body: formDataToSend,
         }
       );
+
       if (response.status === 401) {
         navigate("/");
       }
@@ -264,42 +279,43 @@ const UserProfile = ({ token }) => {
                 value={formData.lookingFor}
                 onChange={handleInputChange}
               />
-              {formData.imagePreview && (
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    marginBottom: 2,
-                    gap: 3,
-                  }}
+              {/* {formData.imagePreview && ( */}
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  marginBottom: 2,
+                  gap: 3,
+                }}
+              >
+                <Button
+                  component="label"
+                  role={undefined}
+                  variant="outlined"
+                  tabIndex={-1}
+                  startIcon={<CloudUploadIcon />}
                 >
-                  <Button
-                    component="label"
-                    role={undefined}
-                    variant="outlined"
-                    tabIndex={-1}
-                    startIcon={<CloudUploadIcon />}
-                  >
-                    Upload files
-                    <VisuallyHiddenInput
-                      type="file"
-                      onChange={(event) => console.log(event.target.files)}
-                      multiple
-                    />
-                  </Button>
-                  <Avatar
-                    src={formData.imagePreview}
-                    alt="Image Preview"
-                    sx={{
-                      width: 100,
-                      height: 100,
-                      borderRadius: "50%",
-                      boxShadow: 3,
-                    }}
-                  />{" "}
-                </Box>
-              )}
+                  Upload files
+                  <VisuallyHiddenInput
+                    type="file"
+                    accept="image/*" // Limit to image files only
+                    onChange={handleFileChange}
+                    multiple
+                  />
+                </Button>
+                <Avatar
+                  src={formData.imagePreview}
+                  alt="Image Preview"
+                  sx={{
+                    width: 100,
+                    height: 100,
+                    borderRadius: "50%",
+                    boxShadow: 3,
+                  }}
+                />
+              </Box>
+
               <Box
                 sx={{
                   display: "flex",

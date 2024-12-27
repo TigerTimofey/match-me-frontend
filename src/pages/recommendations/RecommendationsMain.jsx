@@ -5,6 +5,7 @@ import StarIcon from "@mui/icons-material/Star";
 import Grid from "@mui/material/Grid2";
 import { useNavigate } from "react-router-dom";
 import { handleImageDisplay } from "../../utils/handleImageDisplay";
+import AgeRangeSlider from "./components/AgeRangeSlider";
 
 function RecommendationsMain({ currentUserId }) {
   const navigate = useNavigate();
@@ -16,6 +17,7 @@ function RecommendationsMain({ currentUserId }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [matchedUserIds, setMatchedUserIds] = useState([]);
+  const [ageRange, setAgeRange] = useState([1, 99]);
 
   const findMatches = (currentUserId, userDetailsArray) => {
     const currentUser = userDetailsArray.find(
@@ -105,23 +107,38 @@ function RecommendationsMain({ currentUserId }) {
       return null;
     }
   };
-
   useEffect(() => {
     const fetchAllData = async () => {
       setLoading(true);
+
       const ids = await fetchRecommendations();
       setRecommendations(ids);
 
       const detailsPromises = ids.map((id) => fetchUserDetails(id));
       const details = await Promise.all(detailsPromises);
-      const validDetails = details.filter(Boolean);
+
+      const validDetails = details.filter((user) => {
+        return user.age >= ageRange[0] && user.age <= ageRange[1];
+      });
 
       setRecommendationsWithDetails(validDetails);
       setLoading(false);
     };
 
     fetchAllData();
-  }, [navigate]);
+  }, [navigate, ageRange]);
+
+  useEffect(() => {
+    const fetchAndLogAges = async () => {
+      for (const { id } of matchedUserIds) {
+        const userDetails = await fetchUserDetails(id);
+      }
+    };
+
+    if (matchedUserIds.length > 0) {
+      fetchAndLogAges();
+    }
+  }, [matchedUserIds]);
 
   useEffect(() => {
     const fetchRecommendedUserData = async () => {
@@ -129,7 +146,7 @@ function RecommendationsMain({ currentUserId }) {
         const token = localStorage.getItem("jwt");
         const userDataPromises = matchedUserIds.map(async ({ id, score }) => {
           const response = await fetch(
-            `${process.env.REACT_APP_SERVER_URL}/api/users/${id}`, // Accessing the 'id' of the user
+            `${process.env.REACT_APP_SERVER_URL}/api/users/${id}`,
             {
               method: "GET",
               headers: {
@@ -140,7 +157,7 @@ function RecommendationsMain({ currentUserId }) {
           );
           if (response.ok) {
             const userData = await response.json();
-            return { ...userData, score }; // Include score
+            return { ...userData, score };
           }
           return null;
         });
@@ -148,12 +165,11 @@ function RecommendationsMain({ currentUserId }) {
         const recommendedUsers = await Promise.all(userDataPromises);
         const validRecommendedUsers = recommendedUsers.filter(Boolean);
 
-        // Sort users by score in descending order (highest first)
         const sortedUsers = validRecommendedUsers.sort(
           (a, b) => b.score - a.score
         );
 
-        setRecommendationsWithImage(sortedUsers); // Set sorted users
+        setRecommendationsWithImage(sortedUsers);
       } catch (error) {
         console.error("Error fetching recommended user data:", error);
       }
@@ -181,6 +197,7 @@ function RecommendationsMain({ currentUserId }) {
         >
           Recommendations
         </Typography>
+        <AgeRangeSlider value={ageRange} onChange={setAgeRange} />
       </Card>
       {loading ? (
         <Typography sx={{ mt: 5 }} textAlign="center">
@@ -209,6 +226,7 @@ function RecommendationsMain({ currentUserId }) {
                   backgroundColor: "#ffffff",
                   padding: 2,
                 }}
+                className="animate__animated  animate__fadeIn"
               >
                 <Box
                   display="flex"

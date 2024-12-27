@@ -6,6 +6,7 @@ import Grid from "@mui/material/Grid2";
 import { useNavigate } from "react-router-dom";
 import { handleImageDisplay } from "../../utils/handleImageDisplay";
 import AgeRangeSlider from "./components/AgeRangeSlider";
+import GenderFilter from "./components/GenderFilter";
 
 function RecommendationsMain({ currentUserId }) {
   const navigate = useNavigate();
@@ -17,7 +18,8 @@ function RecommendationsMain({ currentUserId }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [matchedUserIds, setMatchedUserIds] = useState([]);
-  const [ageRange, setAgeRange] = useState([1, 99]);
+  const [ageRange, setAgeRange] = useState([0, 99]);
+  const [genres, setgenres] = useState("all");
 
   const findMatches = (currentUserId, userDetailsArray) => {
     const currentUser = userDetailsArray.find(
@@ -30,22 +32,19 @@ function RecommendationsMain({ currentUserId }) {
       .map((user) => {
         let score = 0;
 
-        // Add points for matching city
         if (user.city === currentUser.city) score++;
 
-        // Add points for each matching language
         const languageMatches = user.languages.filter((lang) =>
           currentUser.languages.includes(lang)
         ).length;
         score += languageMatches;
 
-        // Add points for each matching hobby
         const hobbyMatches = user.hobbies.filter((hobby) =>
           currentUser.hobbies.includes(hobby)
         ).length;
         score += hobbyMatches;
 
-        return { id: user.id, score }; // Attach score to user data
+        return { id: user.id, score };
       });
 
     return matchScores;
@@ -145,7 +144,7 @@ function RecommendationsMain({ currentUserId }) {
       try {
         const token = localStorage.getItem("jwt");
         const userDataPromises = matchedUserIds.map(async ({ id, score }) => {
-          const response = await fetch(
+          const userResponse = await fetch(
             `${process.env.REACT_APP_SERVER_URL}/api/users/${id}`,
             {
               method: "GET",
@@ -155,10 +154,24 @@ function RecommendationsMain({ currentUserId }) {
               },
             }
           );
-          if (response.ok) {
-            const userData = await response.json();
-            return { ...userData, score };
+          const userData = userResponse.ok ? await userResponse.json() : null;
+
+          const bioResponse = await fetch(
+            `${process.env.REACT_APP_SERVER_URL}/api/users/${id}/bio`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          const bioData = bioResponse.ok ? await bioResponse.json() : null;
+
+          if (userData && bioData) {
+            return { ...userData, id, score, genres: bioData.genres };
           }
+
           return null;
         });
 
@@ -170,6 +183,16 @@ function RecommendationsMain({ currentUserId }) {
         );
 
         setRecommendationsWithImage(sortedUsers);
+
+        console.log(
+          "sortedUsers with IDs and genres",
+          sortedUsers.map((user, index) => ({
+            id: matchedUserIds[index]?.id,
+            name: user.name,
+            score: user.score,
+            genres: user.genres,
+          }))
+        );
       } catch (error) {
         console.error("Error fetching recommended user data:", error);
       }
@@ -182,7 +205,7 @@ function RecommendationsMain({ currentUserId }) {
 
   return (
     <Box sx={{ flexGrow: 1, padding: 2 }}>
-      <Card
+      {/* <Card
         sx={{
           padding: 3,
           boxShadow: 2,
@@ -198,7 +221,41 @@ function RecommendationsMain({ currentUserId }) {
           Recommendations
         </Typography>
         <AgeRangeSlider value={ageRange} onChange={setAgeRange} />
+        <GenderFilter value={genres} onChange={setgenres} />
+      </Card> */}
+      <Typography
+        variant="h4"
+        sx={{
+          fontWeight: 600,
+          textAlign: "center",
+          mb: 3,
+          color: "rgb(44,44,44)",
+          letterSpacing: 3,
+        }}
+      >
+        Recommendations
+      </Typography>
+      <Card
+        sx={{
+          padding: 3,
+          boxShadow: 2,
+          backgroundColor: "#f0efef",
+          color: "rgb(44,44,44)",
+          marginBottom: 4,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <Box sx={{ width: 200 }}>
+          <AgeRangeSlider value={ageRange} onChange={setAgeRange} />
+        </Box>
+
+        <Box sx={{ width: 200 }}>
+          <GenderFilter value={genres} onChange={setgenres} />
+        </Box>
       </Card>
+
       {loading ? (
         <Typography sx={{ mt: 5 }} textAlign="center">
           Loading...
@@ -213,90 +270,97 @@ function RecommendationsMain({ currentUserId }) {
           spacing={{ xs: 2, md: 3 }}
           columns={{ xs: 4, sm: 8, md: 12 }}
         >
-          {recommendationsWithImage.map((user, index) => (
-            <Grid size={{ xs: 2, sm: 4, md: 4 }} key={`${index}`}>
-              <Card
-                sx={{
-                  height: 250,
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  boxShadow: 3,
-                  backgroundColor: "#ffffff",
-                  padding: 2,
-                }}
-                className="animate__animated  animate__fadeIn"
-              >
-                <Box
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="center"
-                  mt={2}
+          {recommendationsWithImage
+            .filter((user) => user.genres === genres || genres === "all")
+            .map((user, index) => (
+              <Grid size={{ xs: 2, sm: 4, md: 4 }} key={`${user.id}-${index}`}>
+                <Card
+                  sx={{
+                    height: 250,
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    boxShadow: 3,
+                    backgroundColor: "#ffffff",
+                    padding: 2,
+                  }}
+                  className="animate__animated  animate__fadeIn"
                 >
-                  <Avatar
-                    src={handleImageDisplay(user.image)}
-                    sx={{ width: 100, height: 100, boxShadow: 3 }}
-                  />
-                </Box>
-                <Typography variant="h5" sx={{ fontWeight: 600, mt: 2 }}>
-                  {user.name || "Unknown User"}
-                </Typography>
-                <Box display="flex" alignItems="center" mt={1}>
-                  <Rating
-                    size="small"
-                    value={Math.min(user.score, 5)} // Capping the score at 5
-                    max={5}
-                    precision={0.5}
-                    emptyIcon={
-                      <StarIcon style={{ opacity: 0.55 }} fontSize="inherit" />
-                    }
-                    readOnly
-                  />
-                </Box>
-
-                <Box
-                  display="flex"
-                  justifyContent="space-between"
-                  width="100%"
-                  mt="auto"
-                >
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    size="small"
-                    sx={{
-                      backgroundColor: "rgb(44,44,44)",
-                      color: "#f4f3f3",
-                      fontWeight: 600,
-                      fontSize: "0.7rem",
-                      fontFamily: "Poppins",
-                      width: "45%",
-                    }}
-                    onClick={() => console.log(`Decline user: ${user.id}`)}
+                  <Box
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    mt={2}
                   >
-                    Decline
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    size="small"
-                    sx={{
-                      backgroundColor: "rgb(44,44,44)",
-                      color: "#f4f3f3",
-                      fontWeight: 600,
-                      fontSize: "0.7rem",
-                      fontFamily: "Poppins",
-                      width: "45%",
-                    }}
-                    onClick={() => console.log(`Connect with: ${user.id}`)}
+                    <Avatar
+                      src={handleImageDisplay(user.image)}
+                      sx={{ width: 100, height: 100, boxShadow: 3 }}
+                    />
+                  </Box>{" "}
+                  <Typography variant="body1" sx={{ mt: 2 }}>
+                    {user.genres}
+                  </Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 600, mt: 2 }}>
+                    {user.name || "Unknown User"}
+                  </Typography>
+                  <Box display="flex" alignItems="center" mt={1}>
+                    <Rating
+                      size="small"
+                      value={Math.min(user.score, 5)}
+                      max={5}
+                      precision={0.5}
+                      emptyIcon={
+                        <StarIcon
+                          style={{ opacity: 0.55 }}
+                          fontSize="inherit"
+                        />
+                      }
+                      readOnly
+                    />
+                  </Box>
+                  <Box
+                    display="flex"
+                    justifyContent="space-between"
+                    width="100%"
+                    mt="auto"
                   >
-                    Connect
-                  </Button>
-                </Box>
-              </Card>
-            </Grid>
-          ))}
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      size="small"
+                      sx={{
+                        backgroundColor: "rgb(44,44,44)",
+                        color: "#f4f3f3",
+                        fontWeight: 600,
+                        fontSize: "0.7rem",
+                        fontFamily: "Poppins",
+                        width: "45%",
+                      }}
+                      onClick={() => console.log(`Decline user: ${user.id}`)}
+                    >
+                      Decline
+                    </Button>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      size="small"
+                      sx={{
+                        backgroundColor: "rgb(44,44,44)",
+                        color: "#f4f3f3",
+                        fontWeight: 600,
+                        fontSize: "0.7rem",
+                        fontFamily: "Poppins",
+                        width: "45%",
+                      }}
+                      onClick={() => console.log(`Connect with: ${user.id}`)}
+                    >
+                      Connect
+                    </Button>
+                  </Box>
+                </Card>
+              </Grid>
+            ))}
         </Grid>
       ) : (
         <Typography textAlign="center">

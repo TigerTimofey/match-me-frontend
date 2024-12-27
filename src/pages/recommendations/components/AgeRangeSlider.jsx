@@ -47,7 +47,7 @@ const AgeRangeSlider = ({ value, onChange }) => {
   };
 
   return (
-    <Box sx={{ width: 300, display: "flex", flexDirection: "column", gap: 1 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
       <Typography
         variant="subtitle1"
         sx={{ color: "rgb(44,44,44)", fontWeight: 500 }}

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Card, Typography, Box, Avatar, Button } from "@mui/material";
+import Rating from "@mui/material/Rating";
+import StarIcon from "@mui/icons-material/Star";
 import Grid from "@mui/material/Grid2";
 import { useNavigate } from "react-router-dom";
-
 import { handleImageDisplay } from "../../utils/handleImageDisplay";
 
 function RecommendationsMain({ currentUserId }) {
@@ -223,13 +224,19 @@ function RecommendationsMain({ currentUserId }) {
                 <Typography variant="h5" sx={{ fontWeight: 600, mt: 2 }}>
                   {user.name || "Unknown User"}
                 </Typography>
-                <Typography
-                  variant="body2"
-                  color="textSecondary"
-                  sx={{ mt: 1 }}
-                >
-                  Points: {user.score} {/* Displaying the score here */}
-                </Typography>
+                <Box display="flex" alignItems="center" mt={1}>
+                  <Rating
+                    size="small"
+                    value={Math.min(user.score, 5)} // Capping the score at 5
+                    max={5}
+                    precision={0.5}
+                    emptyIcon={
+                      <StarIcon style={{ opacity: 0.55 }} fontSize="inherit" />
+                    }
+                    readOnly
+                  />
+                </Box>
+
                 <Box
                   display="flex"
                   justifyContent="space-between"

@@ -20,20 +20,14 @@ function RecommendationsMain({ currentUserId }) {
     const currentUser = userDetailsArray.find(
       (user) => user.id === currentUserId
     );
-
-    if (!currentUser) {
-      console.warn(
-        `Current user with ID ${currentUserId} not found in details array.`
-      );
-      return [];
-    }
+    if (!currentUser) return [];
 
     const matchScores = userDetailsArray
       .filter((user) => user.id !== currentUserId)
       .map((user) => {
         let score = 0;
 
-        // Add 1 point for matching city
+        // Add points for matching city
         if (user.city === currentUser.city) score++;
 
         // Add points for each matching language
@@ -48,19 +42,10 @@ function RecommendationsMain({ currentUserId }) {
         ).length;
         score += hobbyMatches;
 
-        return { id: user.id, score };
+        return { id: user.id, score }; // Attach score to user data
       });
 
-    // Log scores for debugging
-    console.log("Match scores with detailed breakdown:", matchScores);
-
-    // Sort matches by score in descending order
-    const sortedMatches = matchScores
-      .filter(({ score }) => score > 0)
-      .sort((a, b) => b.score - a.score)
-      .map(({ id }) => id);
-
-    return sortedMatches;
+    return matchScores;
   };
 
   useEffect(() => {
@@ -90,6 +75,7 @@ function RecommendationsMain({ currentUserId }) {
           errorData.message || "Failed to fetch recommendations."
         );
       }
+
       return await response.json();
     } catch (err) {
       setError(err.message || "An unexpected error occurred.");
@@ -137,38 +123,42 @@ function RecommendationsMain({ currentUserId }) {
   }, [navigate]);
 
   useEffect(() => {
-    if (matchedUserIds.length > 0) {
-      const fetchRecommendedUserData = async () => {
-        try {
-          const token = localStorage.getItem("jwt");
-          const userDataPromises = matchedUserIds.map(async (id) => {
-            const response = await fetch(
-              `${process.env.REACT_APP_SERVER_URL}/api/users/${id}`,
-              {
-                method: "GET",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${token}`,
-                },
-              }
-            );
-            if (response.ok) {
-              return await response.json();
-            } else {
-              console.error(`Failed to fetch user data for ID ${id}`);
-              return null;
+    const fetchRecommendedUserData = async () => {
+      try {
+        const token = localStorage.getItem("jwt");
+        const userDataPromises = matchedUserIds.map(async ({ id, score }) => {
+          const response = await fetch(
+            `${process.env.REACT_APP_SERVER_URL}/api/users/${id}`, // Accessing the 'id' of the user
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
             }
-          });
+          );
+          if (response.ok) {
+            const userData = await response.json();
+            return { ...userData, score }; // Include score
+          }
+          return null;
+        });
 
-          const recommendedUsers = await Promise.all(userDataPromises);
-          const validRecommendedUsers = recommendedUsers.filter(Boolean);
-          setRecommendationsWithImage(validRecommendedUsers);
-          console.log("Recommended User Data:", validRecommendedUsers);
-        } catch (error) {
-          console.error("Error fetching recommended user data:", error);
-        }
-      };
+        const recommendedUsers = await Promise.all(userDataPromises);
+        const validRecommendedUsers = recommendedUsers.filter(Boolean);
 
+        // Sort users by score in descending order (highest first)
+        const sortedUsers = validRecommendedUsers.sort(
+          (a, b) => b.score - a.score
+        );
+
+        setRecommendationsWithImage(sortedUsers); // Set sorted users
+      } catch (error) {
+        console.error("Error fetching recommended user data:", error);
+      }
+    };
+
+    if (matchedUserIds.length > 0) {
       fetchRecommendedUserData();
     }
   }, [matchedUserIds]);
@@ -223,7 +213,7 @@ function RecommendationsMain({ currentUserId }) {
                   display="flex"
                   alignItems="center"
                   justifyContent="center"
-                  mt={2} // Margin top for spacing
+                  mt={2}
                 >
                   <Avatar
                     src={handleImageDisplay(user.image)}
@@ -233,11 +223,18 @@ function RecommendationsMain({ currentUserId }) {
                 <Typography variant="h5" sx={{ fontWeight: 600, mt: 2 }}>
                   {user.name || "Unknown User"}
                 </Typography>
+                <Typography
+                  variant="body2"
+                  color="textSecondary"
+                  sx={{ mt: 1 }}
+                >
+                  Points: {user.score} {/* Displaying the score here */}
+                </Typography>
                 <Box
                   display="flex"
                   justifyContent="space-between"
                   width="100%"
-                  mt="auto" // Pushes buttons to the bottom
+                  mt="auto"
                 >
                   <Button
                     variant="contained"
@@ -251,9 +248,7 @@ function RecommendationsMain({ currentUserId }) {
                       fontFamily: "Poppins",
                       width: "45%",
                     }}
-                    onClick={() =>
-                      console.log(`Decline user: ${matchedUserIds[index]}`)
-                    }
+                    onClick={() => console.log(`Decline user: ${user.id}`)}
                   >
                     Decline
                   </Button>
@@ -269,9 +264,7 @@ function RecommendationsMain({ currentUserId }) {
                       fontFamily: "Poppins",
                       width: "45%",
                     }}
-                    onClick={() =>
-                      console.log(`Connect with: ${matchedUserIds[index]}`)
-                    }
+                    onClick={() => console.log(`Connect with: ${user.id}`)}
                   >
                     Connect
                   </Button>

@@ -2,11 +2,7 @@ import { Box, Button } from "@mui/material";
 import { useState, useEffect } from "react";
 
 function ConnectionButtons({ choosenId, currentUserId, onDismiss }) {
-  const [dismissed, setDismissed] = useState([]); // Managing the dismissed state here
-  console.log(
-    "dismissed",
-    dismissed.length > 0 ? dismissed : "No dismissed users"
-  );
+  const [dismissed, setDismissed] = useState([]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -30,7 +26,7 @@ function ConnectionButtons({ choosenId, currentUserId, onDismiss }) {
 
       const userData = await userResponse.json();
       const currentDismissed = userData.dismissed || [];
-      console.log("currentDismissed", currentDismissed);
+      //   console.log("currentDismissed", currentDismissed);
       setDismissed(currentDismissed);
     };
 

@@ -39,6 +39,7 @@ function RecommendationsMain({ currentUserId }) {
   const [matchedUserIds, setMatchedUserIds] = useState([]);
   const [ageRange, setAgeRange] = useState([0, 99]);
   const [genres, setgenres] = useState("all");
+  const [dismissed, setDismissed] = useState([]);
 
   const findMatches = (currentUserId, userDetailsArray) => {
     const currentUser = userDetailsArray.find(
@@ -125,6 +126,7 @@ function RecommendationsMain({ currentUserId }) {
       return null;
     }
   };
+
   useEffect(() => {
     const fetchAllData = async () => {
       setLoading(true);
@@ -201,11 +203,15 @@ function RecommendationsMain({ currentUserId }) {
           (a, b) => b.score - a.score
         );
 
-        setRecommendationsWithImage(sortedUsers);
+        const filteredUsers = sortedUsers.filter(
+          (user) => !dismissed.includes(user.id)
+        );
+
+        setRecommendationsWithImage(filteredUsers);
 
         console.log(
-          "sortedUsers with IDs and genres",
-          sortedUsers.map((user, index) => ({
+          "filteredUsers with IDs and genres",
+          filteredUsers.map((user, index) => ({
             id: matchedUserIds[index]?.id,
             name: user.name,
             score: user.score,
@@ -220,13 +226,41 @@ function RecommendationsMain({ currentUserId }) {
     if (matchedUserIds.length > 0) {
       fetchRecommendedUserData();
     }
-  }, [matchedUserIds]);
+  }, [matchedUserIds, dismissed]);
 
   const handleDismiss = (dismissedId) => {
     setRecommendationsWithImage((prevRecommendations) =>
       prevRecommendations.filter((user) => user.id !== dismissedId)
     );
   };
+  useEffect(() => {
+    const fetchUser = async () => {
+      const token = localStorage.getItem("jwt");
+
+      const userResponse = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}/dismissed`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!userResponse.ok) {
+        console.error("Failed to fetch user data:", await userResponse.json());
+        return;
+      }
+
+      const userData = await userResponse.json();
+      const currentDismissed = userData.dismissed || [];
+      console.log("currentDismissed in MAIN", currentDismissed);
+      setDismissed(currentDismissed);
+    };
+
+    fetchUser();
+  }, []);
 
   return (
     <Box sx={{ flexGrow: 1, padding: 2 }}>

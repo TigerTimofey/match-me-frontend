@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { Card, Typography, Box, Avatar, Button } from "@mui/material";
+import {
+  Card,
+  Typography,
+  Box,
+  Avatar,
+  Button,
+  Badge,
+  styled,
+} from "@mui/material";
 import Rating from "@mui/material/Rating";
 import StarIcon from "@mui/icons-material/Star";
 import Grid from "@mui/material/Grid2";
@@ -7,6 +15,16 @@ import { useNavigate } from "react-router-dom";
 import { handleImageDisplay } from "../../utils/handleImageDisplay";
 import AgeRangeSlider from "./components/AgeRangeSlider";
 import GenderFilter from "./components/GenderFilter";
+
+const StyledBadge = styled(Badge)(({ theme }) => ({
+  "& .MuiBadge-badge": {
+    backgroundColor: "rgb(44,44,44)",
+    color: "#f0efef",
+    fontWeight: "bold",
+    textAlign: "center",
+    transform: "translateX(45px)",
+  },
+}));
 
 function RecommendationsMain({ currentUserId }) {
   const navigate = useNavigate();
@@ -293,17 +311,23 @@ function RecommendationsMain({ currentUserId }) {
                     justifyContent="center"
                     mt={2}
                   >
-                    <Avatar
-                      src={handleImageDisplay(user.image)}
-                      sx={{ width: 100, height: 100, boxShadow: 3 }}
-                    />
+                    {user.genres === "Male" || user.genres === "Female" ? (
+                      <StyledBadge badgeContent={user.genres}>
+                        <Avatar
+                          src={handleImageDisplay(user.image)}
+                          sx={{ width: 100, height: 100, boxShadow: 3 }}
+                        />
+                      </StyledBadge>
+                    ) : (
+                      <Avatar
+                        src={handleImageDisplay(user.image)}
+                        sx={{ width: 100, height: 100, boxShadow: 3 }}
+                      />
+                    )}
                   </Box>{" "}
-                  <Typography variant="body1" sx={{ mt: 2 }}>
-                    {user.genres}
-                  </Typography>
                   <Typography variant="h5" sx={{ fontWeight: 600, mt: 2 }}>
                     {user.name || "Unknown User"}
-                  </Typography>
+                  </Typography>{" "}
                   <Box display="flex" alignItems="center" mt={1}>
                     <Rating
                       size="small"

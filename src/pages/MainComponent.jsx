@@ -31,6 +31,7 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import FingerprintIcon from "@mui/icons-material/Fingerprint";
 
 import { handleImageDisplay } from "../utils/handleImageDisplay";
+import DashboardMain from "./dashboard/DashboardMain";
 
 function MainComponent() {
   const theme = useTheme();
@@ -398,7 +399,7 @@ function MainComponent() {
             </Alert>
           )}
           {activeMenu === "Dashboard" && userData && (
-            <UserDetailsCard userData={userData} />
+            <DashboardMain userData={userData} currentUserId={userData.id} />
           )}
           {activeMenu === "Recommend" &&
             (hasCompleteBio ? (

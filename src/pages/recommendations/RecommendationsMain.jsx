@@ -15,6 +15,7 @@ import { useNavigate } from "react-router-dom";
 import { handleImageDisplay } from "../../utils/handleImageDisplay";
 import AgeRangeSlider from "./components/AgeRangeSlider";
 import GenderFilter from "./components/GenderFilter";
+import ConnectionButtons from "./components/buttons/ConnectionButtons";
 
 const StyledBadge = styled(Badge)(({ theme }) => ({
   "& .MuiBadge-badge": {
@@ -221,26 +222,14 @@ function RecommendationsMain({ currentUserId }) {
     }
   }, [matchedUserIds]);
 
+  const handleDismiss = (dismissedId) => {
+    setRecommendationsWithImage((prevRecommendations) =>
+      prevRecommendations.filter((user) => user.id !== dismissedId)
+    );
+  };
+
   return (
     <Box sx={{ flexGrow: 1, padding: 2 }}>
-      {/* <Card
-        sx={{
-          padding: 3,
-          boxShadow: 2,
-          backgroundColor: "#f0efef",
-          color: "rgb(44,44,44)",
-          marginBottom: 4,
-        }}
-      >
-        <Typography
-          variant="h4"
-          sx={{ fontWeight: 600, textAlign: "center", mb: 2 }}
-        >
-          Recommendations
-        </Typography>
-        <AgeRangeSlider value={ageRange} onChange={setAgeRange} />
-        <GenderFilter value={genres} onChange={setgenres} />
-      </Card> */}
       <Typography
         variant="h4"
         sx={{
@@ -343,45 +332,11 @@ function RecommendationsMain({ currentUserId }) {
                       readOnly
                     />
                   </Box>
-                  <Box
-                    display="flex"
-                    justifyContent="space-between"
-                    width="100%"
-                    mt="auto"
-                  >
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      size="small"
-                      sx={{
-                        backgroundColor: "rgb(44,44,44)",
-                        color: "#f4f3f3",
-                        fontWeight: 600,
-                        fontSize: "0.7rem",
-                        fontFamily: "Poppins",
-                        width: "45%",
-                      }}
-                      onClick={() => console.log(`Decline user: ${user.id}`)}
-                    >
-                      Decline
-                    </Button>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      size="small"
-                      sx={{
-                        backgroundColor: "rgb(44,44,44)",
-                        color: "#f4f3f3",
-                        fontWeight: 600,
-                        fontSize: "0.7rem",
-                        fontFamily: "Poppins",
-                        width: "45%",
-                      }}
-                      onClick={() => console.log(`Connect with: ${user.id}`)}
-                    >
-                      Connect
-                    </Button>
-                  </Box>
+                  <ConnectionButtons
+                    choosenId={user.id}
+                    currentUserId={currentUserId}
+                    onDismiss={handleDismiss}
+                  />
                 </Card>
               </Grid>
             ))}

@@ -8,7 +8,13 @@ import {
   Avatar,
   Switch,
   styled,
+  Divider,
+  Button,
+  IconButton,
+  ButtonGroup,
 } from "@mui/material";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle"; // Accept icon
+import CancelIcon from "@mui/icons-material/Cancel"; // Reject icon
 import UserDetailsCard from "../user-data/UserDetails";
 import { handleImageDisplay } from "../../utils/handleImageDisplay";
 
@@ -54,6 +60,31 @@ function DashboardMain({ userData, currentUserId }) {
   const [dismissed, setDismissed] = useState([]);
   const [showChips, setShowChips] = useState(false);
   const [userImages, setUserImages] = useState({}); // Store user images by their IDs
+  const [incomeRequests, setIncomeRequests] = useState([]);
+  const [showIncomeRequests, setShowIncomeRequests] = useState(false);
+  const [fadingCard, setFadingCard] = useState(null); // Track which card is fading
+
+  useEffect(() => {
+    const fetchIncomeRequests = async () => {
+      const token = localStorage.getItem("jwt");
+
+      const incomeResponse = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}/income-requests`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await incomeResponse.json();
+      setIncomeRequests(data.incomeRequests || []);
+    };
+
+    fetchIncomeRequests();
+  }, [currentUserId]);
 
   useEffect(() => {
     const fetchDismissed = async () => {
@@ -88,8 +119,9 @@ function DashboardMain({ userData, currentUserId }) {
   useEffect(() => {
     const fetchUserImages = async () => {
       const token = localStorage.getItem("jwt");
+      const allUserIds = [...dismissed, ...incomeRequests]; // Merge dismissed and income requests IDs
 
-      for (const userId of dismissed) {
+      for (const userId of allUserIds) {
         const userResponse = await fetch(
           `${process.env.REACT_APP_SERVER_URL}/api/users/${userId}`,
           {
@@ -109,10 +141,10 @@ function DashboardMain({ userData, currentUserId }) {
       }
     };
 
-    if (dismissed.length > 0) {
+    if (dismissed.length > 0 || incomeRequests.length > 0) {
       fetchUserImages();
     }
-  }, [dismissed]);
+  }, [dismissed, incomeRequests]);
 
   const handleRemove = async (userId) => {
     const token = localStorage.getItem("jwt");
@@ -136,6 +168,56 @@ function DashboardMain({ userData, currentUserId }) {
 
     setDismissed((prev) => prev.filter((id) => id !== userId));
   };
+  const handleIncomeRequestRemove = async (userId) => {
+    const token = localStorage.getItem("jwt");
+
+    // Remove the declined user from income requests
+    const incomeRequestResponse = await fetch(
+      `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}/income-requests`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(incomeRequests.filter((id) => id !== userId)),
+      }
+    );
+
+    if (!incomeRequestResponse.ok) {
+      console.error(
+        "Failed to update income requests:",
+        await incomeRequestResponse.json()
+      );
+      return;
+    }
+
+    // Add the declined user to the dismissed array
+    const updatedDismissed = [...dismissed, userId];
+
+    const dismissedResponse = await fetch(
+      `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}/dismissed`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(updatedDismissed),
+      }
+    );
+
+    if (!dismissedResponse.ok) {
+      console.error(
+        "Failed to update dismissed users:",
+        await dismissedResponse.json()
+      );
+      return;
+    }
+
+    setDismissed(updatedDismissed);
+    setIncomeRequests((prev) => prev.filter((id) => id !== userId));
+  };
 
   return (
     <Box sx={{ flexGrow: 1, padding: 2 }}>
@@ -152,6 +234,175 @@ function DashboardMain({ userData, currentUserId }) {
         Dashboard
       </Typography>
       <UserDetailsCard userData={userData} />
+
+      {incomeRequests.length > 0 && (
+        <Card
+          sx={{
+            mt: 3,
+            padding: 3,
+            boxShadow: 2,
+            backgroundColor: "#f0efef",
+            color: "rgb(44,44,44)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <FormControlLabel
+            sx={{
+              gap: 1,
+              "& .MuiFormControlLabel-label": {
+                fontSize: "1.2rem",
+                fontWeight: "bold",
+                color: "rgb(44,44,44)",
+              },
+            }}
+            control={
+              <MatchSwitcher
+                checked={showIncomeRequests}
+                onChange={(e) => setShowIncomeRequests(e.target.checked)}
+              />
+            }
+            label={
+              showIncomeRequests
+                ? "Hide Income Requests"
+                : "Show Income Requests"
+            }
+          />
+        </Card>
+      )}
+
+      {showIncomeRequests && incomeRequests.length > 0 && (
+        <Card
+          sx={{
+            mt: 3,
+            padding: 1,
+            boxShadow: 2,
+            backgroundColor: "#f0efef",
+            color: "rgb(44,44,44)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Box sx={{ textAlign: "center" }}>
+            <Typography
+              variant="h5"
+              sx={{ fontWeight: 600, textAlign: "center", pt: 1 }}
+            >
+              Match requests
+            </Typography>
+            <Divider sx={{ my: 1, width: "100%" }} />
+            {incomeRequests.map((userId) => (
+              <Box
+                className={
+                  fadingCard?.userId === userId
+                    ? `animate__animated ${
+                        fadingCard.action === "accept"
+                          ? "animate__fadeOutLeft"
+                          : "animate__fadeOutRight"
+                      }`
+                    : "animate__animated animate__fadeIn"
+                }
+                key={userId}
+                sx={{ textAlign: "center" }}
+              >
+                <Typography
+                  variant="body1"
+                  sx={{
+                    color: "rgb(44,44,44)",
+                    fontWeight: 600,
+                    fontSize: "1rem",
+                    fontFamily: "Poppins",
+                  }}
+                >
+                  User ID: {userId}
+                </Typography>
+                <Box
+                  key={userId}
+                  sx={{
+                    mb: 2,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    width: "100%",
+                    padding: 1,
+                    boxSizing: "border-box",
+                    borderBottom: "1px solid #ddd",
+                  }}
+                >
+                  {" "}
+                  <Button
+                    size="small"
+                    color="primary"
+                    variant="contained"
+                    sx={{
+                      backgroundColor: "rgb(44, 44, 44)",
+                      color: "#f4f3f3",
+                      fontWeight: 600,
+                      fontSize: "0.8rem",
+                      fontFamily: "Poppins",
+                      mr: 2,
+                    }}
+                    onClick={() => {
+                      setFadingCard({ userId, action: "accept" });
+                      setTimeout(() => {
+                        // handleAcceptRequest(userId);
+                        setFadingCard(null);
+                      }, 1000);
+                    }}
+                    startIcon={<CheckCircleIcon />}
+                  >
+                    Accept
+                  </Button>
+                  <Avatar
+                    alt={userId.toString()}
+                    src={handleImageDisplay(userImages[userId])}
+                    sx={{ width: 50, height: 50, marginRight: 2 }}
+                  />
+                  <Box sx={{ flexGrow: 1 }}>
+                    <Box
+                      sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                    >
+                      <ButtonGroup
+                        orientation="vertical"
+                        aria-label="Vertical button group"
+                        // variant="text"
+                        variant="contained"
+                      >
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          size="small"
+                          sx={{
+                            backgroundColor: "#721c24",
+                            color: "#f4f3f3",
+                            fontWeight: 600,
+                            fontSize: "0.8rem",
+                            fontFamily: "Poppins",
+                          }}
+                          onClick={() => {
+                            setFadingCard({ userId, action: "decline" }); // Set fading state for Decline
+                            setTimeout(() => {
+                              handleIncomeRequestRemove(userId); // Remove request
+                              setFadingCard(null); // Reset fading card
+                            }, 1000); // Wait for animation duration
+                          }}
+                          startIcon={<CancelIcon />}
+                        >
+                          Decline
+                        </Button>
+                      </ButtonGroup>
+                    </Box>
+                  </Box>
+                </Box>
+              </Box>
+            ))}
+          </Box>
+        </Card>
+      )}
       {dismissed.length > 0 && (
         <Card
           sx={{
@@ -200,6 +451,13 @@ function DashboardMain({ userData, currentUserId }) {
           }}
         >
           <Box sx={{ textAlign: "center" }}>
+            <Typography
+              variant="h5"
+              sx={{ fontWeight: 600, textAlign: "center", pt: 1 }}
+            >
+              Dismissed users
+            </Typography>
+            <Divider sx={{ my: 1, width: "100%" }} />
             {dismissed.map((userId) => (
               <Chip
                 key={userId}

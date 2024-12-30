@@ -257,13 +257,12 @@ function DashboardMain({ userData, currentUserId }) {
   return (
     <Box sx={{ flexGrow: 1, padding: 2 }}>
       <Typography
-        variant="h4"
+        variant="h5"
         sx={{
           fontWeight: 600,
           textAlign: "center",
           mb: 3,
           color: "rgb(44,44,44)",
-          letterSpacing: 3,
         }}
       >
         Dashboard

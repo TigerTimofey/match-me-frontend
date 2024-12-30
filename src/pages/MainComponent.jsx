@@ -292,7 +292,7 @@ function MainComponent() {
         <AppBar position="static" sx={{ backgroundColor: "rgb(44,44,44)" }}>
           <Toolbar>
             <Typography
-              variant="h6"
+              variant="h5"
               sx={{
                 display: "flex",
                 alignItems: "center",

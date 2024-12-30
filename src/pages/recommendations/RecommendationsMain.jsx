@@ -270,13 +270,13 @@ function RecommendationsMain({ currentUserId }) {
   return (
     <Box sx={{ flexGrow: 1, padding: 2 }}>
       <Typography
-        variant="h4"
+        variant="h5"
         sx={{
           fontWeight: 600,
           textAlign: "center",
           mb: 3,
           color: "rgb(44,44,44)",
-          letterSpacing: 3,
+          // letterSpacing: 3,
         }}
       >
         Recommendations
@@ -320,7 +320,7 @@ function RecommendationsMain({ currentUserId }) {
           {recommendationsWithImage
             .filter((user) => user.genres === genres || genres === "all")
             .map((user, index) => (
-              <Grid size={{ xs: 2, sm: 4, md: 4 }} key={`${user.id}-${index}`}>
+              <Grid size={{ xs: 12, sm: 4, md: 4 }} key={`${user.id}-${index}`}>
                 <Card
                   sx={{
                     height: 250,

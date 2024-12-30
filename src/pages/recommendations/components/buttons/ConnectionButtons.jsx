@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 
 function ConnectionButtons({ choosenId, currentUserId, onDismiss }) {
   const [dismissed, setDismissed] = useState([]);
+  const [isPending, setIsPending] = useState(false);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -95,6 +97,7 @@ function ConnectionButtons({ choosenId, currentUserId, onDismiss }) {
     }
   };
   const handleConnect = async () => {
+    setIsPending(true);
     try {
       const token = localStorage.getItem("jwt");
 
@@ -203,6 +206,46 @@ function ConnectionButtons({ choosenId, currentUserId, onDismiss }) {
       console.error("Error updating connection requests:", error);
     }
   };
+  useEffect(() => {
+    const checkPendingStatus = () => {
+      const token = localStorage.getItem("jwt");
+
+      // Check if choosenId is in the outcome or income requests
+      Promise.all([
+        fetch(
+          `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}/outcome-requests`,
+          {
+            method: "GET",
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        ),
+        fetch(
+          `${process.env.REACT_APP_SERVER_URL}/api/users/${choosenId}/income-requests`,
+          {
+            method: "GET",
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        ),
+      ])
+        .then(([outcomeResponse, incomeResponse]) => {
+          if (!outcomeResponse.ok || !incomeResponse.ok) return;
+
+          return Promise.all([outcomeResponse.json(), incomeResponse.json()]);
+        })
+        .then(([outcomeData, incomeData]) => {
+          const outcomeRequests = outcomeData?.outcomeRequests || [];
+          const incomeRequests = incomeData?.incomeRequests || [];
+
+          setIsPending(
+            outcomeRequests.includes(choosenId) ||
+              incomeRequests.includes(currentUserId)
+          );
+        })
+        .catch((err) => console.error(err));
+    };
+
+    checkPendingStatus();
+  }, [choosenId, currentUserId]);
 
   return (
     <Box display="flex" justifyContent="space-between" width="100%" mt="auto">
@@ -235,8 +278,9 @@ function ConnectionButtons({ choosenId, currentUserId, onDismiss }) {
           width: "45%",
         }}
         onClick={handleConnect}
+        disabled={isPending} // Disable if pending
       >
-        Connect
+        {isPending ? "Pending" : "Connect"}
       </Button>
     </Box>
   );

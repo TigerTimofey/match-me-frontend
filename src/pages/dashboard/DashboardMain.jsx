@@ -215,6 +215,41 @@ function DashboardMain({ userData, currentUserId }) {
       return;
     }
 
+    // Now remove the current user from the outcomeRequests of the declined user
+    const outcomeRequestsResponse = await fetch(
+      `${process.env.REACT_APP_SERVER_URL}/api/users/${userId}/outcome-requests`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(
+          (
+            await (
+              await fetch(
+                `${process.env.REACT_APP_SERVER_URL}/api/users/${userId}/outcome-requests`,
+                {
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                  },
+                }
+              )
+            ).json()
+          ).outcomeRequests.filter((id) => id !== currentUserId)
+        ),
+      }
+    );
+
+    if (!outcomeRequestsResponse.ok) {
+      console.error(
+        "Failed to update outcome requests of the declined user:",
+        await outcomeRequestsResponse.json()
+      );
+      return;
+    }
+
     setDismissed(updatedDismissed);
     setIncomeRequests((prev) => prev.filter((id) => id !== userId));
   };

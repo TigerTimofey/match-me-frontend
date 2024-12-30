@@ -48,7 +48,9 @@ function RecommendationsMain({ currentUserId }) {
     if (!currentUser) return [];
 
     const matchScores = userDetailsArray
-      .filter((user) => user.id !== currentUserId)
+      .filter(
+        (user) => user.id !== currentUserId && user.city === currentUser.city
+      )
       .map((user) => {
         let score = 0;
 

@@ -1,7 +1,7 @@
 import React from "react";
 import Slider from "@mui/material/Slider";
 import Box from "@mui/material/Box";
-import { styled, Typography } from "@mui/material";
+import { Divider, styled, Typography } from "@mui/material";
 
 const PrettoSlider = styled(Slider)(({ theme }) => ({
   color: "rgb(44,44,44)",
@@ -50,7 +50,7 @@ const AgeRangeSlider = ({ value, onChange }) => {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
       <Typography
         variant="subtitle1"
-        sx={{ color: "rgb(44,44,44)", fontWeight: 500 }}
+        sx={{ color: "rgb(44,44,44)", fontWeight: 700 }}
       >
         Filter by Age
       </Typography>
@@ -66,6 +66,7 @@ const AgeRangeSlider = ({ value, onChange }) => {
       <Typography variant="body2" color="text.secondary">
         Age range: {value[0]} - {value[1]}
       </Typography>
+      <Divider sx={{ display: { xs: "block", sm: "none" } }} />
     </Box>
   );
 };

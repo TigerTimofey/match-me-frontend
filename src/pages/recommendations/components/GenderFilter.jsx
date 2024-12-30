@@ -9,11 +9,16 @@ import {
 const GenderFilter = ({ value, onChange }) => {
   return (
     <Box
-      sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: { xs: "flex-start", sm: "flex-end" },
+        mt: { xs: 1, sm: 0 },
+      }}
     >
       <Typography
         variant="subtitle1"
-        sx={{ color: "rgb(44,44,44)", fontWeight: 500, textAlign: "right" }}
+        sx={{ color: "rgb(44,44,44)", fontWeight: 700, textAlign: "right" }}
       >
         Filter by Gender
       </Typography>

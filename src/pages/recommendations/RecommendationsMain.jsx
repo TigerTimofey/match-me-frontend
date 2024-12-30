@@ -23,7 +23,10 @@ const StyledBadge = styled(Badge)(({ theme }) => ({
     color: "#f0efef",
     fontWeight: "bold",
     textAlign: "center",
-    transform: "translateX(45px)",
+    transform: "translateX(40px)",
+    [theme.breakpoints.down("sm")]: {
+      display: "none",
+    },
   },
 }));
 
@@ -286,6 +289,7 @@ function RecommendationsMain({ currentUserId }) {
           color: "rgb(44,44,44)",
           marginBottom: 4,
           display: "flex",
+          flexDirection: { xs: "column", md: "row" },
           justifyContent: "space-between",
           alignItems: "center",
         }}

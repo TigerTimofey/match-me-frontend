@@ -253,6 +253,134 @@ function DashboardMain({ userData, currentUserId }) {
     setDismissed(updatedDismissed);
     setIncomeRequests((prev) => prev.filter((id) => id !== userId));
   };
+  const handleAcceptRequest = async (userId) => {
+    const token = localStorage.getItem("jwt");
+
+    try {
+      // Step 1: Get the current connection data
+      const connectionResponse = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}/connections`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!connectionResponse.ok) {
+        const errorResponse = await connectionResponse.json();
+        console.error("Failed to establish connection:", errorResponse);
+        return;
+      }
+
+      const connectionData = await connectionResponse.json();
+      console.log("step one - getting connection: success", connectionData);
+
+      // Step 2: Push userId to connections array
+      connectionData.connections.push(userId);
+      console.log("step two - adding userId to connections:", connectionData);
+
+      // Step 3: Create FormData object
+      const formData = new FormData();
+      formData.append(
+        "data",
+        JSON.stringify({
+          connections: connectionData.connections,
+        })
+      );
+
+      // Step 4: Send the request with FormData to update connection
+      const patchResponse = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/api/users/${connectionData.id}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData, // Use FormData as the body
+        }
+      );
+
+      if (!patchResponse.ok) {
+        const errorPatchResponse = await patchResponse.json();
+        console.error(
+          "Failed to update connections in DB:",
+          errorPatchResponse
+        );
+        return;
+      }
+
+      console.log("step four - updating connections in DB: success");
+
+      // Step 5: Fetch the updated data (new connections)
+      const updatedConnectionResponse = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}/connections`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!updatedConnectionResponse.ok) {
+        const errorUpdatedResponse = await updatedConnectionResponse.json();
+        console.error(
+          "Failed to fetch updated connections:",
+          errorUpdatedResponse
+        );
+        return;
+      }
+
+      const updatedConnectionData = await updatedConnectionResponse.json();
+      console.log(
+        "step five - fetching updated connection data: success",
+        updatedConnectionData
+      );
+    } catch (error) {
+      console.error("Error in accepting the request:", error);
+    }
+    // Step 6: Remove userId from incomeRequests
+    const incomeRequestsResponse = await fetch(
+      `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}/income-requests`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(
+          (
+            await (
+              await fetch(
+                `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}/income-requests`,
+                {
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                  },
+                }
+              )
+            ).json()
+          ).incomeRequests.filter((id) => id !== userId)
+        ),
+      }
+    );
+
+    if (!incomeRequestsResponse.ok) {
+      const errorIncomeRequestResponse = await incomeRequestsResponse.json();
+      console.error(
+        "Failed to update income requests (remove userId):",
+        errorIncomeRequestResponse
+      );
+      return;
+    }
+
+    console.log("step six - userId removed from incomeRequests: success");
+  };
 
   return (
     <Box sx={{ flexGrow: 1, padding: 2 }}>
@@ -298,11 +426,7 @@ function DashboardMain({ userData, currentUserId }) {
                 onChange={(e) => setShowIncomeRequests(e.target.checked)}
               />
             }
-            label={
-              showIncomeRequests
-                ? "Hide Income Requests"
-                : "Show Income Requests"
-            }
+            label={showIncomeRequests ? "Hide Requests" : "Show Requests"}
           />
         </Card>
       )}
@@ -383,13 +507,23 @@ function DashboardMain({ userData, currentUserId }) {
                     onClick={() => {
                       setFadingCard({ userId, action: "accept" });
                       setTimeout(() => {
-                        // handleAcceptRequest(userId);
+                        handleAcceptRequest(userId);
+                        setIncomeRequests((prev) =>
+                          prev.filter((id) => id !== userId)
+                        );
                         setFadingCard(null);
                       }, 1000);
                     }}
                     startIcon={<CheckCircleIcon />}
                   >
                     Accept
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      handleAcceptRequest(userId);
+                    }}
+                  >
+                    test
                   </Button>
                   <Avatar
                     alt={userId.toString()}
@@ -418,11 +552,11 @@ function DashboardMain({ userData, currentUserId }) {
                             fontFamily: "Poppins",
                           }}
                           onClick={() => {
-                            setFadingCard({ userId, action: "decline" }); // Set fading state for Decline
+                            setFadingCard({ userId, action: "decline" });
                             setTimeout(() => {
-                              handleIncomeRequestRemove(userId); // Remove request
-                              setFadingCard(null); // Reset fading card
-                            }, 1000); // Wait for animation duration
+                              handleIncomeRequestRemove(userId);
+                              setFadingCard(null);
+                            }, 1000);
                           }}
                           startIcon={<CancelIcon />}
                         >

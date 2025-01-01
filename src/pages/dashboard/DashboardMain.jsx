@@ -17,6 +17,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle"; // Accept icon
 import CancelIcon from "@mui/icons-material/Cancel"; // Reject icon
 import UserDetailsCard from "../user-data/UserDetails";
 import { handleImageDisplay } from "../../utils/handleImageDisplay";
+import { useNavigate } from "react-router-dom";
 
 const MatchSwitcher = styled((props) => (
   <Switch focusVisibleClassName=".Mui-focusVisible" disableRipple {...props} />
@@ -57,6 +58,7 @@ const MatchSwitcher = styled((props) => (
 }));
 
 function DashboardMain({ userData, currentUserId }) {
+  const navigate = useNavigate();
   const [dismissed, setDismissed] = useState([]);
   const [showChips, setShowChips] = useState(false);
   const [userImages, setUserImages] = useState({}); // Store user images by their IDs
@@ -78,7 +80,9 @@ function DashboardMain({ userData, currentUserId }) {
           },
         }
       );
-
+      if (incomeResponse.status === 401) {
+        navigate("/me");
+      }
       const data = await incomeResponse.json();
       setIncomeRequests(data.incomeRequests || []);
     };
@@ -100,6 +104,9 @@ function DashboardMain({ userData, currentUserId }) {
           },
         }
       );
+      if (userResponse.status === 401) {
+        navigate("/me");
+      }
 
       if (!userResponse.ok) {
         console.error(
@@ -119,7 +126,7 @@ function DashboardMain({ userData, currentUserId }) {
   useEffect(() => {
     const fetchUserImages = async () => {
       const token = localStorage.getItem("jwt");
-      const allUserIds = [...dismissed, ...incomeRequests]; // Merge dismissed and income requests IDs
+      const allUserIds = [...dismissed, ...incomeRequests];
 
       for (const userId of allUserIds) {
         const userResponse = await fetch(
@@ -517,13 +524,6 @@ function DashboardMain({ userData, currentUserId }) {
                     startIcon={<CheckCircleIcon />}
                   >
                     Accept
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      handleAcceptRequest(userId);
-                    }}
-                  >
-                    test
                   </Button>
                   <Avatar
                     alt={userId.toString()}

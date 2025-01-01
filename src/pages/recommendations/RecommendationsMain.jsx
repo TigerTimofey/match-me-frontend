@@ -252,7 +252,9 @@ function RecommendationsMain({ currentUserId }) {
           },
         }
       );
-
+      if (userResponse.status === 401) {
+        navigate("/me");
+      }
       if (!userResponse.ok) {
         console.error("Failed to fetch user data:", await userResponse.json());
         return;

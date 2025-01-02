@@ -49,11 +49,17 @@ function RecommendationsMain({ currentUserId }) {
     const currentUser = userDetailsArray.find(
       (user) => user.id === currentUserId
     );
-    if (!currentUser) return [];
+
+    if (!currentUser) {
+      console.warn(
+        `Current user with ID ${currentUserId} not found in details array.`
+      );
+      return [];
+    }
 
     const matchScores = userDetailsArray
       .filter(
-        (user) => user.id !== currentUserId && user.city === currentUser.city
+        (user) => user?.id !== currentUserId && user?.city === currentUser?.city
       )
       .map((user) => {
         let score = 0;
@@ -78,6 +84,8 @@ function RecommendationsMain({ currentUserId }) {
 
   useEffect(() => {
     if (recommendationsWithDetails.length > 0 && currentUserId) {
+      console.log("Recommendations:", recommendationsWithDetails);
+      console.log("Current User ID:", currentUserId);
       const matches = findMatches(currentUserId, recommendationsWithDetails);
       setMatchedUserIds(matches);
     }
@@ -374,6 +382,7 @@ function RecommendationsMain({ currentUserId }) {
         >
           {recommendationsWithImage
             .filter((user) => user.genres === genres || genres === "all")
+            .slice(0, 10)
             .map((user, index) => (
               <Grid size={{ xs: 12, sm: 4, md: 4 }} key={`${user.id}-${index}`}>
                 <Card

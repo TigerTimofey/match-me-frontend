@@ -1,7 +1,9 @@
 import React, { useEffect } from "react";
 import { Box, Card, Typography } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 
 function ConnectionsMain({ currentUserId }) {
+  const navigate = useNavigate();
   const [connections, setConnections] = React.useState([]);
   const getConnections = async () => {
     const token = localStorage.getItem("jwt");
@@ -17,7 +19,10 @@ function ConnectionsMain({ currentUserId }) {
           },
         }
       );
-
+      if (response.status === 401) {
+        navigate("/me");
+        return;
+      }
       if (!response.ok) {
         console.error("Failed to fetch connections:", await response.json());
         return;

@@ -214,15 +214,15 @@ function RecommendationsMain({ currentUserId }) {
 
         setRecommendationsWithImage(filteredUsers);
 
-        console.log(
-          "filteredUsers with IDs and genres",
-          filteredUsers.map((user, index) => ({
-            id: matchedUserIds[index]?.id,
-            name: user.name,
-            score: user.score,
-            genres: user.genres,
-          }))
-        );
+        // console.log(
+        //   "filteredUsers with IDs and genres",
+        //   filteredUsers.map((user, index) => ({
+        //     id: matchedUserIds[index]?.id,
+        //     name: user.name,
+        //     score: user.score,
+        //     genres: user.genres,
+        //   }))
+        // );
       } catch (error) {
         console.error("Error fetching recommended user data:", error);
       }

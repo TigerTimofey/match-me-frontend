@@ -288,7 +288,66 @@ function DashboardMain({ userData, currentUserId }) {
       // Step 2: Push userId to connections array
       connectionData.connections.push(userId);
       console.log("step two - adding userId to connections:", connectionData);
+      //for other side user
+      // Step 2: Push currentUserId to the userId's connections array
+      const userConnectionResponse = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/api/users/${userId}/connections`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
+      if (!userConnectionResponse.ok) {
+        const errorResponse = await userConnectionResponse.json();
+        console.error("Failed to get user connections:", errorResponse);
+        return;
+      }
+
+      const userConnectionData = await userConnectionResponse.json();
+      userConnectionData.connections.push(currentUserId);
+      console.log(
+        "step two - adding currentUserId to userId's connections:",
+        userConnectionData
+      );
+
+      // Step 2b: Update userId's connections in DB (with FormData)
+      const userFormData = new FormData();
+      userFormData.append(
+        "data",
+        JSON.stringify({
+          connections: userConnectionData.connections,
+        })
+      );
+
+      const finalUserPatchResponse = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/api/users/${userId}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: userFormData, // Use FormData here
+        }
+      );
+
+      if (!finalUserPatchResponse.ok) {
+        const errorFinalUserPatchResponse = await finalUserPatchResponse.json();
+        console.error(
+          "Failed to update user connections in DB (with FormData):",
+          errorFinalUserPatchResponse
+        );
+        return;
+      }
+
+      console.log(
+        "step two b - userId's connections updated in DB (with FormData): success"
+      );
+
+      //&&&
       // Step 3: Create FormData object
       const formData = new FormData();
       formData.append(

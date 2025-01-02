@@ -43,6 +43,7 @@ function RecommendationsMain({ currentUserId }) {
   const [ageRange, setAgeRange] = useState([0, 99]);
   const [genres, setgenres] = useState("all");
   const [dismissed, setDismissed] = useState([]);
+  const [connections, setConnections] = useState([]);
 
   const findMatches = (currentUserId, userDetailsArray) => {
     const currentUser = userDetailsArray.find(
@@ -204,25 +205,16 @@ function RecommendationsMain({ currentUserId }) {
         const recommendedUsers = await Promise.all(userDataPromises);
         const validRecommendedUsers = recommendedUsers.filter(Boolean);
 
-        const sortedUsers = validRecommendedUsers.sort(
-          (a, b) => b.score - a.score
+        const nonConnectedUsers = validRecommendedUsers.filter(
+          (user) => !connections.includes(user.id)
         );
 
+        const sortedUsers = nonConnectedUsers.sort((a, b) => b.score - a.score);
         const filteredUsers = sortedUsers.filter(
           (user) => !dismissed.includes(user.id)
         );
 
         setRecommendationsWithImage(filteredUsers);
-
-        // console.log(
-        //   "filteredUsers with IDs and genres",
-        //   filteredUsers.map((user, index) => ({
-        //     id: matchedUserIds[index]?.id,
-        //     name: user.name,
-        //     score: user.score,
-        //     genres: user.genres,
-        //   }))
-        // );
       } catch (error) {
         console.error("Error fetching recommended user data:", error);
       }
@@ -232,7 +224,12 @@ function RecommendationsMain({ currentUserId }) {
       fetchRecommendedUserData();
     }
   }, [matchedUserIds, dismissed]);
-
+  // console.log(
+  //   "recommendationsWithImage",
+  //   recommendationsWithImage.map(
+  //     (id, index) => recommendationsWithImage[index].id
+  //   )
+  // );
   const handleDismiss = (dismissedId) => {
     setRecommendationsWithImage((prevRecommendations) =>
       prevRecommendations.filter((user) => user.id !== dismissedId)
@@ -252,22 +249,78 @@ function RecommendationsMain({ currentUserId }) {
           },
         }
       );
+
       if (userResponse.status === 401) {
         navigate("/me");
-      }
-      if (!userResponse.ok) {
-        console.error("Failed to fetch user data:", await userResponse.json());
         return;
       }
 
-      const userData = await userResponse.json();
-      const currentDismissed = userData.dismissed || [];
-      console.log("currentDismissed in MAIN", currentDismissed);
-      setDismissed(currentDismissed);
+      let userData = null;
+
+      if (userResponse.ok) {
+        // Read response only once
+        userData = await userResponse.json();
+        setRecommendationsWithImage(userData);
+
+        const currentDismissed = userData.dismissed || [];
+        setDismissed(currentDismissed);
+      } else {
+        const errorData = await userResponse.json(); // Read the error message only once
+        console.error("Failed to fetch user data:", errorData);
+      }
     };
 
     fetchUser();
   }, []);
+
+  useEffect(() => {
+    const getConnections = async (currentUserId) => {
+      try {
+        const token = localStorage.getItem("jwt");
+        const updatedConnectionResponse = await fetch(
+          `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}/connections`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!updatedConnectionResponse.ok) {
+          const errorUpdatedResponse = await updatedConnectionResponse.json();
+          console.error(
+            "Failed to fetch updated connections:",
+            errorUpdatedResponse
+          );
+          return;
+        }
+
+        // Parse the response before updating state
+        const updatedConnectionData = await updatedConnectionResponse.json();
+        console.log(
+          "updatedConnectionData in recommendations",
+          updatedConnectionData
+        );
+
+        // Update the connections state
+        setConnections((prevConnections) => {
+          const newConnections = [
+            ...prevConnections,
+            ...updatedConnectionData.connections,
+          ];
+          return Array.from(new Set(newConnections));
+        });
+      } catch (error) {
+        console.error("Error fetching connections:", error);
+      }
+    };
+
+    if (currentUserId) {
+      getConnections(currentUserId);
+    }
+  }, [currentUserId]);
 
   return (
     <Box sx={{ flexGrow: 1, padding: 2 }}>

@@ -31,6 +31,8 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import FingerprintIcon from "@mui/icons-material/Fingerprint";
 
 import { handleImageDisplay } from "../utils/handleImageDisplay";
+import DashboardMain from "./dashboard/DashboardMain";
+import ConnectionsMain from "./connections/ConnectionsMain";
 
 function MainComponent() {
   const theme = useTheme();
@@ -233,8 +235,9 @@ function MainComponent() {
         console.log("Recommend in main clicked");
         <RecommendationsMain />;
         break;
-      case "Chat":
-        console.log("Chat  in main clicked");
+      case "Connections":
+        console.log("Connections  in main clicked");
+        <ConnectionsMain />;
         break;
       case "Logout":
         localStorage.removeItem("jwt");
@@ -261,6 +264,9 @@ function MainComponent() {
           }
         );
 
+        if (response.status === 401) {
+          navigate("/me");
+        }
         if (!response.ok) {
           throw new Error("Failed to fetch bio data");
         }
@@ -291,7 +297,7 @@ function MainComponent() {
         <AppBar position="static" sx={{ backgroundColor: "rgb(44,44,44)" }}>
           <Toolbar>
             <Typography
-              variant="h6"
+              variant="h5"
               sx={{
                 display: "flex",
                 alignItems: "center",
@@ -398,7 +404,7 @@ function MainComponent() {
             </Alert>
           )}
           {activeMenu === "Dashboard" && userData && (
-            <UserDetailsCard userData={userData} />
+            <DashboardMain userData={userData} currentUserId={userData.id} />
           )}
           {activeMenu === "Recommend" &&
             (hasCompleteBio ? (
@@ -444,6 +450,9 @@ function MainComponent() {
                 )}
               </Box>
             ))}
+          {activeMenu === "Connections" && (
+            <ConnectionsMain userData={userData} currentUserId={userData.id} />
+          )}
         </Box>
       </Box>
       {/* Modal */}

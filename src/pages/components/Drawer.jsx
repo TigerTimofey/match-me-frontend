@@ -142,8 +142,8 @@ const Drawer = ({ userData, onSelectMenu, activeMenu }) => {
                 }}
               />
               <TelegramIcon
-                onClick={() => handleMenuClick("Chat")}
-                sx={getMenuItemStyle("Chat")}
+                onClick={() => handleMenuClick("Connections")}
+                sx={getMenuItemStyle("Connections")}
               />
             </>
           ) : (
@@ -178,10 +178,10 @@ const Drawer = ({ userData, onSelectMenu, activeMenu }) => {
               />
               <Typography
                 variant="body1"
-                sx={getMenuItemStyle("Chat")}
-                onClick={() => handleMenuClick("Chat")}
+                sx={getMenuItemStyle("Connections")}
+                onClick={() => handleMenuClick("Connections")}
               >
-                Chat
+                Connections
               </Typography>
             </>
           )}

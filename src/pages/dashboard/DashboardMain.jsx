@@ -12,12 +12,14 @@ import {
   Button,
   IconButton,
   ButtonGroup,
+  Modal,
 } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle"; // Accept icon
 import CancelIcon from "@mui/icons-material/Cancel"; // Reject icon
 import UserDetailsCard from "../user-data/UserDetails";
 import { handleImageDisplay } from "../../utils/handleImageDisplay";
 import { useNavigate } from "react-router-dom";
+import { languages } from "../../local-variables/languages";
 
 const MatchSwitcher = styled((props) => (
   <Switch focusVisibleClassName=".Mui-focusVisible" disableRipple {...props} />
@@ -65,6 +67,8 @@ function DashboardMain({ userData, currentUserId }) {
   const [incomeRequests, setIncomeRequests] = useState([]);
   const [showIncomeRequests, setShowIncomeRequests] = useState(false);
   const [fadingCard, setFadingCard] = useState(null); // Track which card is fading
+  const [bio, setBio] = useState({});
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     const fetchIncomeRequests = async () => {
@@ -448,6 +452,37 @@ function DashboardMain({ userData, currentUserId }) {
     console.log("step six - userId removed from incomeRequests: success");
   };
 
+  const fetchBios = async (userId) => {
+    const token = localStorage.getItem("jwt");
+
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/api/users/${userId}/bio`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        if (response.status === 401) {
+          navigate("/me");
+        }
+        const bioData = await response.json();
+        console.log(`Bio for ${userId}:`, bioData);
+        setBio(bioData);
+        setOpen(true);
+      } else {
+        console.error(`Failed to fetch bio for user ${userId}`);
+      }
+    } catch (error) {
+      console.error(`Error fetching bio for user ${userId}:`, error);
+    }
+  };
+
   return (
     <Box sx={{ flexGrow: 1, padding: 2 }}>
       <Typography
@@ -523,27 +558,144 @@ function DashboardMain({ userData, currentUserId }) {
               <Box
                 className={
                   fadingCard?.userId === userId
-                    ? `animate__animated ${
-                        fadingCard.action === "accept"
-                          ? "animate__fadeOutLeft"
-                          : "animate__fadeOutRight"
-                      }`
+                    ? "animate__animated animate__fadeOut"
                     : "animate__animated animate__fadeIn"
                 }
                 key={userId}
                 sx={{ textAlign: "center" }}
               >
-                <Typography
-                  variant="body1"
+                {" "}
+                <Box
                   sx={{
-                    color: "rgb(44,44,44)",
-                    fontWeight: 600,
-                    fontSize: "1rem",
-                    fontFamily: "Poppins",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
                 >
-                  User ID: {userId}
-                </Typography>
+                  {" "}
+                  <Avatar
+                    alt={userId.toString()}
+                    src={handleImageDisplay(userImages[userId])}
+                    sx={{ width: 100, height: 100, marginRight: 2 }}
+                  />
+                  <Button
+                    variant="contained"
+                    size="small"
+                    sx={{
+                      backgroundColor: "rgb(44, 44, 44)",
+                      color: "#f4f3f3",
+
+                      fontFamily: "Poppins",
+                      fontWeight: 600,
+                    }}
+                    onClick={() => fetchBios(userId)}
+                  >
+                    Bio
+                  </Button>
+                  <Modal
+                    open={open}
+                    onClose={() => setOpen(false)}
+                    sx={{
+                      "& .MuiBackdrop-root": {
+                        backgroundColor: "rgba(0, 0, 0, 0.5)",
+                      },
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        top: "50%",
+                        left: "50%",
+                        transform: "translate(-50%, -50%)",
+                        width: 300,
+                        bgcolor: "#f0efef",
+                        boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
+                        borderRadius: "8px",
+                        p: 4,
+                      }}
+                    >
+                      <Typography
+                        variant="h4"
+                        align="center"
+                        sx={{ fontFamily: "Poppins", fontWeight: 600 }}
+                      >
+                        Biographical
+                      </Typography>
+                      <Divider
+                        sx={{ my: 2, borderColor: "black", width: "100%" }}
+                      />
+
+                      <Typography
+                        variant="h5"
+                        align="center"
+                        sx={{ fontWeight: 600, mt: 2 }}
+                      >
+                        {bio.name} {bio.lastname}
+                      </Typography>
+
+                      <Typography
+                        variant="h6"
+                        align="center"
+                        sx={{ fontWeight: 600, mt: 2 }}
+                      >
+                        Age
+                      </Typography>
+                      <Typography variant="body1" align="center">
+                        {bio.age}
+                      </Typography>
+
+                      <Typography
+                        variant="h6"
+                        align="center"
+                        sx={{ fontWeight: 600, mt: 2 }}
+                      >
+                        Gender{" "}
+                      </Typography>
+                      <Typography variant="body1" align="center">
+                        {bio.gender}
+                      </Typography>
+                      <Typography
+                        variant="h6"
+                        align="center"
+                        sx={{ fontWeight: 600, mt: 2 }}
+                      >
+                        City{" "}
+                      </Typography>
+                      <Typography variant="body1" align="center">
+                        {bio.city}
+                      </Typography>
+
+                      <Typography
+                        variant="h6"
+                        align="center"
+                        sx={{ fontWeight: 600, mt: 2 }}
+                      >
+                        Hobbies
+                      </Typography>
+
+                      <Typography variant="body1" align="center">
+                        {bio.hobbies?.join(", ") || ""}
+                      </Typography>
+                      <Typography
+                        variant="h6"
+                        align="center"
+                        sx={{ fontWeight: 600, mt: 2 }}
+                      >
+                        Languages
+                      </Typography>
+                      <Box align="center">
+                        {bio?.languages?.map((lang, index) => (
+                          <Chip
+                            key={index}
+                            label={languages[lang]}
+                            sx={{ m: 0.5, fontSize: "2rem" }}
+                          />
+                        ))}
+                      </Box>
+                    </Box>
+                  </Modal>
+                </Box>{" "}
+                <></>
                 <Box
                   key={userId}
                   sx={{
@@ -558,70 +710,60 @@ function DashboardMain({ userData, currentUserId }) {
                   }}
                 >
                   {" "}
-                  <Button
-                    size="small"
-                    color="primary"
-                    variant="contained"
-                    sx={{
-                      backgroundColor: "rgb(44, 44, 44)",
-                      color: "#f4f3f3",
-                      fontWeight: 600,
-                      fontSize: "0.8rem",
-                      fontFamily: "Poppins",
-                      mr: 2,
-                    }}
-                    onClick={() => {
-                      setFadingCard({ userId, action: "accept" });
-                      setTimeout(() => {
-                        handleAcceptRequest(userId);
-                        setIncomeRequests((prev) =>
-                          prev.filter((id) => id !== userId)
-                        );
-                        setFadingCard(null);
-                      }, 1000);
-                    }}
-                    startIcon={<CheckCircleIcon />}
-                  >
-                    Accept
-                  </Button>
-                  <Avatar
+                  {/* <Avatar
                     alt={userId.toString()}
                     src={handleImageDisplay(userImages[userId])}
-                    sx={{ width: 50, height: 50, marginRight: 2 }}
-                  />
+                    sx={{ width: 100, height: 100, marginRight: 2 }}
+                  /> */}
                   <Box sx={{ flexGrow: 1 }}>
-                    <Box
-                      sx={{ display: "flex", flexDirection: "column", gap: 1 }}
-                    >
-                      <ButtonGroup
-                        orientation="vertical"
-                        aria-label="Vertical button group"
-                        // variant="text"
+                    <Box sx={{ display: "flex", flexDirection: "row", gap: 1 }}>
+                      <Button
                         variant="contained"
+                        size="small"
+                        sx={{
+                          backgroundColor: "#721c24",
+                          color: "#f4f3f3",
+                          fontWeight: 600,
+                          fontSize: "0.8rem",
+                          fontFamily: "Poppins",
+                          border: "none",
+                        }}
+                        onClick={() => {
+                          setFadingCard({ userId, action: "decline" });
+                          setTimeout(() => {
+                            handleIncomeRequestRemove(userId);
+                            setFadingCard(null);
+                          }, 1000);
+                        }}
+                        startIcon={<CancelIcon />}
                       >
-                        <Button
-                          variant="contained"
-                          color="primary"
-                          size="small"
-                          sx={{
-                            backgroundColor: "#721c24",
-                            color: "#f4f3f3",
-                            fontWeight: 600,
-                            fontSize: "0.8rem",
-                            fontFamily: "Poppins",
-                          }}
-                          onClick={() => {
-                            setFadingCard({ userId, action: "decline" });
-                            setTimeout(() => {
-                              handleIncomeRequestRemove(userId);
-                              setFadingCard(null);
-                            }, 1000);
-                          }}
-                          startIcon={<CancelIcon />}
-                        >
-                          Decline
-                        </Button>
-                      </ButtonGroup>
+                        Decline
+                      </Button>{" "}
+                      <Button
+                        size="small"
+                        variant="contained"
+                        sx={{
+                          backgroundColor: "rgb(44, 44, 44)",
+                          color: "#f4f3f3",
+                          fontWeight: 600,
+                          fontSize: "0.8rem",
+                          fontFamily: "Poppins",
+                          border: "none",
+                        }}
+                        onClick={() => {
+                          setFadingCard({ userId, action: "accept" });
+                          setTimeout(() => {
+                            handleAcceptRequest(userId);
+                            setIncomeRequests((prev) =>
+                              prev.filter((id) => id !== userId)
+                            );
+                            setFadingCard(null);
+                          }, 1000);
+                        }}
+                        startIcon={<CheckCircleIcon />}
+                      >
+                        Accept
+                      </Button>
                     </Box>
                   </Box>
                 </Box>

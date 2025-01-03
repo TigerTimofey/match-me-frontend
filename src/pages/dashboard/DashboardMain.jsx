@@ -109,7 +109,8 @@ function DashboardMain({ userData, currentUserId }) {
         }
       );
       if (userResponse.status === 401) {
-        navigate("/me");
+        navigate("/");
+        return;
       }
 
       if (!userResponse.ok) {

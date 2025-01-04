@@ -16,7 +16,7 @@ import { handleImageDisplay } from "../../utils/handleImageDisplay";
 import { styled } from "@mui/material";
 import { languages } from "../../local-variables/languages";
 import TelegramIcon from "@mui/icons-material/Telegram";
-// import ChatModal from "./components/chat/ChatModal";
+import ChatModal from "./components/chat/ChatModal";
 
 const StyledBadge = styled(Badge)(({ theme }) => ({
   "& .MuiBadge-badge": {
@@ -39,7 +39,9 @@ function ConnectionsMain({ currentUserId }) {
   const [error, setError] = useState(null);
   const [openModal, setOpenModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [openChatModal, setOpenChatModal] = useState(false);
   const [userImages, setUserImages] = useState({});
+  const [selectedUserId, setSelectedUserId] = useState(null);
 
   const fetchConnections = async () => {
     const token = localStorage.getItem("jwt");
@@ -165,7 +167,7 @@ function ConnectionsMain({ currentUserId }) {
         ...prevUser,
         image: userImage,
       }));
-      console.log(userBio);
+
       setOpenModal(true);
     }
   };
@@ -174,7 +176,20 @@ function ConnectionsMain({ currentUserId }) {
     setOpenModal(false);
     setSelectedUser(null);
   };
+  const handleOpenChatModal = (userId) => {
+    const userBio = bios[userId];
+    if (userBio) {
+      setSelectedUser(userBio);
+      setSelectedUserId(userBio.id);
+      setOpenChatModal(true); // Open the chat modal
+    }
+  };
 
+  const handleCloseChatModal = () => {
+    setOpenChatModal(false);
+    setSelectedUser(null);
+    setSelectedUserId(null);
+  };
   return (
     <Box sx={{ flexGrow: 1, padding: 2 }}>
       <Typography
@@ -269,7 +284,7 @@ function ConnectionsMain({ currentUserId }) {
                         fontFamily: "Poppins",
                         "&:hover": { backgroundColor: "rgb(72, 71, 71)" },
                       }}
-                      onClick={() => console.log("chat")}
+                      onClick={() => handleOpenChatModal(connectionId)}
                     >
                       <TelegramIcon />
                     </Button>
@@ -388,6 +403,13 @@ function ConnectionsMain({ currentUserId }) {
           )}
         </Box>
       </Modal>
+      <ChatModal
+        open={openChatModal}
+        onClose={handleCloseChatModal}
+        selectedUser={selectedUser}
+        selectedUserId={selectedUserId}
+        currentUserId={currentUserId}
+      />
     </Box>
   );
 }

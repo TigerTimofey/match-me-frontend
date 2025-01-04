@@ -15,6 +15,8 @@ import {
   useMediaQuery,
   useTheme,
   Button,
+  styled,
+  Badge,
 } from "@mui/material";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import UserDetailsCard from "./user-data/UserDetails";
@@ -33,6 +35,26 @@ import FingerprintIcon from "@mui/icons-material/Fingerprint";
 import { handleImageDisplay } from "../utils/handleImageDisplay";
 import DashboardMain from "./dashboard/DashboardMain";
 import ConnectionsMain from "./connections/ConnectionsMain";
+const StyledBadge = (Component) =>
+  styled(Component)(({ token, theme }) => ({
+    "& .MuiBadge-badge": {
+      backgroundColor: token ? "#44b700" : "#ff0000",
+      color: token ? "#44b700" : "#ff0000",
+      boxShadow: `0 0 0 2px ${theme.palette.background.paper}`,
+      "&::after": {
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        borderRadius: "50%",
+        animation: "ripple 1.2s infinite ease-in-out",
+        border: "1px solid currentColor",
+        content: '""',
+      },
+    },
+  }));
+const DynamicStyledBadge = StyledBadge(Badge);
 
 function MainComponent() {
   const theme = useTheme();
@@ -50,7 +72,7 @@ function MainComponent() {
   const [loading, setLoading] = useState(false);
   const [activeMenu, setActiveMenu] = useState("Dashboard");
   const [hasCompleteBio, setHasCompleteBio] = useState(false);
-
+  const token = localStorage.getItem("jwt");
   useEffect(() => {
     const token = localStorage.getItem("jwt");
     if (token) {
@@ -326,19 +348,26 @@ function MainComponent() {
               Match Me
             </Typography>
 
-            <Avatar
-              src={handleImageDisplay(userData?.image)}
-              sx={{
-                width: 35,
-                height: 35,
-                ml: 2,
-                border: 1,
-                borderColor: "white",
-                boxShadow: 1,
-                cursor: "pointer",
-              }}
-              onClick={handleMenuOpen}
-            />
+            <DynamicStyledBadge
+              token={token}
+              overlap="circular"
+              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+              variant="dot"
+            >
+              <Avatar
+                src={handleImageDisplay(userData?.image)}
+                sx={{
+                  width: 35,
+                  height: 35,
+                  ml: 2,
+                  border: 1,
+                  borderColor: "white",
+                  boxShadow: 1,
+                  cursor: "pointer",
+                }}
+                onClick={handleMenuOpen}
+              />
+            </DynamicStyledBadge>
             <Menu
               anchorEl={anchorEl}
               open={Boolean(anchorEl)}

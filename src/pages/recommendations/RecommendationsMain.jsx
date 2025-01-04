@@ -381,7 +381,11 @@ function RecommendationsMain({ currentUserId }) {
           columns={{ xs: 4, sm: 8, md: 12 }}
         >
           {recommendationsWithImage
-            .filter((user) => user.genres === genres || genres === "all")
+            .filter(
+              (user) =>
+                //not show poor match , only >= 2 stars
+                (user.genres === genres || genres === "all") && user.score >= 2
+            )
             .slice(0, 10)
             .map((user, index) => (
               <Grid size={{ xs: 12, sm: 4, md: 4 }} key={`${user.id}-${index}`}>
@@ -425,7 +429,7 @@ function RecommendationsMain({ currentUserId }) {
                     <Rating
                       size="small"
                       value={Math.min(user.score, 5)}
-                      max={5}
+                      max={7}
                       precision={0.5}
                       emptyIcon={
                         <StarIcon

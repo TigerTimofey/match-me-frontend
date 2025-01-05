@@ -152,7 +152,7 @@ function RecommendationsMain({ currentUserId }) {
       const details = await Promise.all(detailsPromises);
 
       const validDetails = details.filter((user) => {
-        return user.age >= ageRange[0] && user.age <= ageRange[1];
+        return user?.age >= ageRange[0] && user?.age <= ageRange[1];
       });
 
       setRecommendationsWithDetails(validDetails);
@@ -429,7 +429,7 @@ function RecommendationsMain({ currentUserId }) {
                     <Rating
                       size="small"
                       value={Math.min(user.score, 5)}
-                      max={7}
+                      max={5}
                       precision={0.5}
                       emptyIcon={
                         <StarIcon

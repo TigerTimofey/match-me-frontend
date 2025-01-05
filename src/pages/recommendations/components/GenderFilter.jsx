@@ -1,10 +1,10 @@
-import React from "react";
 import {
-  Box,
-  ToggleButtonGroup,
-  ToggleButton,
-  Typography,
+    Box,
+    ToggleButton,
+    ToggleButtonGroup,
+    Typography,
 } from "@mui/material";
+import React from "react";
 
 const GenderFilter = ({ value, onChange }) => {
   return (

@@ -59,9 +59,9 @@ const AgeRangeSlider = ({ value, onChange }) => {
         onChange={handleChange}
         valueLabelDisplay="auto"
         disableSwap
-        min={0}
-        max={100}
-        step={1}
+        min={1}
+        max={99}
+        step={10}
       />
       <Typography variant="body2" color="text.secondary">
         Age range: {value[0]} - {value[1]}

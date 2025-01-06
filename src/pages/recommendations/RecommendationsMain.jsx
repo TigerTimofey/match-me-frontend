@@ -8,9 +8,9 @@ import {
   Badge,
   styled,
 } from "@mui/material";
+import Grid from "@mui/material/Grid2";
 import Rating from "@mui/material/Rating";
 import StarIcon from "@mui/icons-material/Star";
-import Grid from "@mui/material/Grid2";
 import { useNavigate } from "react-router-dom";
 import { handleImageDisplay } from "../../utils/handleImageDisplay";
 import AgeRangeSlider from "./components/AgeRangeSlider";
@@ -40,56 +40,10 @@ function RecommendationsMain({ currentUserId }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [matchedUserIds, setMatchedUserIds] = useState([]);
-  const [ageRange, setAgeRange] = useState([0, 99]);
-  const [genres, setgenres] = useState("all");
+  const [ageRange, setAgeRange] = useState([1, 99]);
+  const [genres, setGenres] = useState("all");
   const [dismissed, setDismissed] = useState([]);
   const [connections, setConnections] = useState([]);
-
-  const findMatches = (currentUserId, userDetailsArray) => {
-    const currentUser = userDetailsArray.find(
-      (user) => user.id === currentUserId
-    );
-
-    if (!currentUser) {
-      console.warn(
-        `Current user with ID ${currentUserId} not found in details array.`
-      );
-      return [];
-    }
-
-    const matchScores = userDetailsArray
-      .filter(
-        (user) => user?.id !== currentUserId && user?.city === currentUser?.city
-      )
-      .map((user) => {
-        let score = 0;
-
-        if (user.city === currentUser.city) score++;
-
-        const languageMatches = user.languages.filter((lang) =>
-          currentUser.languages.includes(lang)
-        ).length;
-        score += languageMatches;
-
-        const hobbyMatches = user.hobbies.filter((hobby) =>
-          currentUser.hobbies.includes(hobby)
-        ).length;
-        score += hobbyMatches;
-
-        return { id: user.id, score };
-      });
-
-    return matchScores;
-  };
-
-  useEffect(() => {
-    if (recommendationsWithDetails.length > 0 && currentUserId) {
-      console.log("Recommendations:", recommendationsWithDetails);
-      console.log("Current User ID:", currentUserId);
-      const matches = findMatches(currentUserId, recommendationsWithDetails);
-      setMatchedUserIds(matches);
-    }
-  }, [recommendationsWithDetails, currentUserId]);
 
   const fetchRecommendations = async () => {
     try {
@@ -111,7 +65,6 @@ function RecommendationsMain({ currentUserId }) {
           errorData.message || "Failed to fetch recommendations."
         );
       }
-
       return await response.json();
     } catch (err) {
       setError(err.message || "An unexpected error occurred.");
@@ -141,38 +94,40 @@ function RecommendationsMain({ currentUserId }) {
     }
   };
 
-  useEffect(() => {
-    const fetchAllData = async () => {
-      setLoading(true);
-
+  const fetchAndPrepareRecommendations = async () => {
+    setLoading(true);
+    try {
       const ids = await fetchRecommendations();
       setRecommendations(ids);
 
       const detailsPromises = ids.map((id) => fetchUserDetails(id));
       const details = await Promise.all(detailsPromises);
 
-      const validDetails = details.filter((user) => {
-        return user?.age >= ageRange[0] && user?.age <= ageRange[1];
-      });
+      const validDetails = details.filter((user) =>
+        user ? user.age >= ageRange[0] && user.age <= ageRange[1] : false
+      );
 
       setRecommendationsWithDetails(validDetails);
+    } catch (error) {
+      setError(error.message || "Failed to fetch user details.");
+    } finally {
       setLoading(false);
-    };
+    }
+  };
 
-    fetchAllData();
+  useEffect(() => {
+    fetchAndPrepareRecommendations();
   }, [navigate, ageRange]);
 
   useEffect(() => {
-    const fetchAndLogAges = async () => {
-      for (const { id } of matchedUserIds) {
-        const userDetails = await fetchUserDetails(id);
-      }
-    };
-
-    if (matchedUserIds.length > 0) {
-      fetchAndLogAges();
+    if (recommendationsWithDetails.length > 0) {
+      const matches = recommendationsWithDetails.map((user) => ({
+        id: user.id,
+        score: Math.random() * 10, // Assuming a random score for simplicity
+      }));
+      setMatchedUserIds(matches);
     }
-  }, [matchedUserIds]);
+  }, [recommendationsWithDetails]);
 
   useEffect(() => {
     const fetchRecommendedUserData = async () => {
@@ -232,103 +187,12 @@ function RecommendationsMain({ currentUserId }) {
       fetchRecommendedUserData();
     }
   }, [matchedUserIds, dismissed]);
-  // console.log(
-  //   "recommendationsWithImage",
-  //   recommendationsWithImage.map(
-  //     (id, index) => recommendationsWithImage[index].id
-  //   )
-  // );
+
   const handleDismiss = (dismissedId) => {
     setRecommendationsWithImage((prevRecommendations) =>
       prevRecommendations.filter((user) => user.id !== dismissedId)
     );
   };
-  useEffect(() => {
-    const fetchUser = async () => {
-      const token = localStorage.getItem("jwt");
-
-      const userResponse = await fetch(
-        `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}/dismissed`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (userResponse.status === 401) {
-        navigate("/me");
-        return;
-      }
-
-      let userData = null;
-
-      if (userResponse.ok) {
-        // Read response only once
-        userData = await userResponse.json();
-        setRecommendationsWithImage(userData);
-
-        const currentDismissed = userData.dismissed || [];
-        setDismissed(currentDismissed);
-      } else {
-        const errorData = await userResponse.json(); // Read the error message only once
-        console.error("Failed to fetch user data:", errorData);
-      }
-    };
-
-    fetchUser();
-  }, []);
-
-  useEffect(() => {
-    const getConnections = async (currentUserId) => {
-      try {
-        const token = localStorage.getItem("jwt");
-        const updatedConnectionResponse = await fetch(
-          `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}/connections`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (!updatedConnectionResponse.ok) {
-          const errorUpdatedResponse = await updatedConnectionResponse.json();
-          console.error(
-            "Failed to fetch updated connections:",
-            errorUpdatedResponse
-          );
-          return;
-        }
-
-        // Parse the response before updating state
-        const updatedConnectionData = await updatedConnectionResponse.json();
-        console.log(
-          "updatedConnectionData in recommendations",
-          updatedConnectionData
-        );
-
-        // Update the connections state
-        setConnections((prevConnections) => {
-          const newConnections = [
-            ...prevConnections,
-            ...updatedConnectionData.connections,
-          ];
-          return Array.from(new Set(newConnections));
-        });
-      } catch (error) {
-        console.error("Error fetching connections:", error);
-      }
-    };
-
-    if (currentUserId) {
-      getConnections(currentUserId);
-    }
-  }, [currentUserId]);
 
   return (
     <Box sx={{ flexGrow: 1, padding: 2 }}>
@@ -339,7 +203,6 @@ function RecommendationsMain({ currentUserId }) {
           textAlign: "center",
           mb: 3,
           color: "rgb(44,44,44)",
-          // letterSpacing: 3,
         }}
       >
         Recommendations
@@ -362,7 +225,7 @@ function RecommendationsMain({ currentUserId }) {
         </Box>
 
         <Box sx={{ width: 200 }}>
-          <GenderFilter value={genres} onChange={setgenres} />
+          <GenderFilter value={genres} onChange={setGenres} />
         </Box>
       </Card>
 
@@ -383,7 +246,6 @@ function RecommendationsMain({ currentUserId }) {
           {recommendationsWithImage
             .filter(
               (user) =>
-                //not show poor match , only >= 2 stars
                 (user.genres === genres || genres === "all") && user.score >= 2
             )
             .slice(0, 10)

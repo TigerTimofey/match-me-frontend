@@ -1,40 +1,39 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import {
-  Box,
   Alert,
-  Typography,
   AppBar,
-  Toolbar,
   Avatar,
+  Badge,
+  Box,
+  Button,
+  CircularProgress,
   Menu,
   MenuItem,
   Modal,
-  CircularProgress,
+  styled,
+  Toolbar,
+  Typography,
   useMediaQuery,
   useTheme,
-  Button,
-  styled,
-  Badge,
 } from "@mui/material";
-import ExitToAppIcon from "@mui/icons-material/ExitToApp";
-import UserDetailsCard from "./user-data/UserDetails";
-import UserProfileCard from "./user-data/UserProfile";
-import UserBioCard from "./user-data/UserBio";
 import Drawer from "./components/Drawer";
+import UserBioCard from "./user-data/UserBio";
+import UserProfileCard from "./user-data/UserProfile";
 
 import RecommendationsMain from "./recommendations/RecommendationsMain";
 
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import EarbudsTwoToneIcon from "@mui/icons-material/EarbudsTwoTone";
 import FaceIcon from "@mui/icons-material/Face";
 import Face3Icon from "@mui/icons-material/Face3";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import FingerprintIcon from "@mui/icons-material/Fingerprint";
 
 import { handleImageDisplay } from "../utils/handleImageDisplay";
-import DashboardMain from "./dashboard/DashboardMain";
 import ConnectionsMain from "./connections/ConnectionsMain";
+import DashboardMain from "./dashboard/DashboardMain";
 const StyledBadge = (Component) =>
   styled(Component)(({ token, theme }) => ({
     "& .MuiBadge-badge": {

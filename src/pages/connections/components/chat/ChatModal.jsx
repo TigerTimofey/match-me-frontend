@@ -1,5 +1,5 @@
-import React from "react";
-import { Modal, Box, Typography, Divider } from "@mui/material";
+import { Box, Button, Divider, Modal, Typography } from "@mui/material";
+import React, { useEffect, useState } from "react";
 
 const ChatModal = ({
   open,
@@ -7,7 +7,50 @@ const ChatModal = ({
   selectedUser,
   currentUserId,
   selectedUserId,
+  onAcceptConnection
 }) => {
+  const [isPending, setIsPending] = useState(false);
+
+  useEffect(() => {
+    const checkConnectionStatus = async () => {
+      if (selectedUserId && currentUserId) {
+        try {
+          const token = localStorage.getItem("jwt");
+          const response = await fetch(
+            `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}/connections`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            }
+          );
+          
+          if (response.ok) {
+            const data = await response.json();
+            setIsPending(data.connections?.includes(selectedUserId));
+          }
+        } catch (error) {
+          console.error("Error checking connection status:", error);
+        }
+      }
+    };
+
+    if (open) {
+      checkConnectionStatus();
+    }
+  }, [open, currentUserId, selectedUserId]);
+
+  const handleAccept = async () => {
+    if (onAcceptConnection) {
+      try {
+        await onAcceptConnection(selectedUserId);
+        setIsPending(true);
+      } catch (error) {
+        console.error("Error accepting connection:", error);
+      }
+    }
+  };
+
   return (
     <Modal open={open} onClose={onClose}>
       <Box
@@ -30,13 +73,31 @@ const ChatModal = ({
               align="center"
               sx={{ fontFamily: "Poppins", fontWeight: 600 }}
             >
-              Chat with {selectedUser.name}
+              {isPending ? "Connected with" : "Connect with"} {selectedUser.name}
             </Typography>
             <Divider sx={{ my: 2, borderColor: "black" }} />
-            <Typography variant="h6" align="center">
-              {selectedUser.name} ID is {selectedUserId} <br />
-              Your ID is {currentUserId}
-            </Typography>
+            
+            {!isPending ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                <Button
+                  variant="contained"
+                  onClick={handleAccept}
+                  sx={{
+                    backgroundColor: "rgb(44,44,44)",
+                    color: "#f4f3f3",
+                    "&:hover": {
+                      backgroundColor: "#3a3a3a"
+                    }
+                  }}
+                >
+                  Accept Connection Request
+                </Button>
+              </Box>
+            ) : (
+              <Typography variant="h6" align="center">
+                You are now connected with {selectedUser.name}!
+              </Typography>
+            )}
           </>
         )}
       </Box>

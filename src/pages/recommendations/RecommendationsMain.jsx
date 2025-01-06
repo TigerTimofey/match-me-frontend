@@ -1,20 +1,22 @@
-import StarIcon from "@mui/icons-material/Star";
+import TelegramIcon from "@mui/icons-material/Telegram";
 import {
   Avatar,
   Badge,
   Box,
+  Button,
   Card,
+  Chip,
+  Divider,
+  Modal,
   styled,
-  Typography
+  Typography,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
-import Rating from "@mui/material/Rating";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { languages } from "../../local-variables/languages";
 import { handleImageDisplay } from "../../utils/handleImageDisplay";
-import AgeRangeSlider from "./components/AgeRangeSlider";
-import GenderFilter from "./components/GenderFilter";
-import ConnectionButtons from "./components/buttons/ConnectionButtons";
+import ChatModal from "./components/chat/ChatModal";
 
 const StyledBadge = styled(Badge)(({ theme }) => ({
   "& .MuiBadge-badge": {
@@ -29,245 +31,24 @@ const StyledBadge = styled(Badge)(({ theme }) => ({
   },
 }));
 
-function RecommendationsMain({ currentUserId }) {
+function ConnectionsMain({ currentUserId }) {
   const navigate = useNavigate();
-  const [recommendations, setRecommendations] = useState([]);
-  const [recommendationsWithDetails, setRecommendationsWithDetails] = useState(
-    []
-  );
-  const [recommendationsWithImage, setRecommendationsWithImage] = useState([]);
+  const [connections, setConnections] = useState([]);
+  const [bios, setBios] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [matchedUserIds, setMatchedUserIds] = useState([]);
-  const [ageRange, setAgeRange] = useState([0, 99]);
-  const [genres, setgenres] = useState("all");
-  const [dismissed, setDismissed] = useState([]);
-  const [connections, setConnections] = useState([]);
+  const [openModal, setOpenModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [openChatModal, setOpenChatModal] = useState(false);
+  const [userImages, setUserImages] = useState({});
+  const [selectedUserId, setSelectedUserId] = useState(null);
 
-  const findMatches = (currentUserId, userDetailsArray) => {
-    const currentUser = userDetailsArray.find(
-      (user) => user.id === currentUserId
-    );
+  const fetchConnections = async () => {
+    const token = localStorage.getItem("jwt");
 
-    if (!currentUser) {
-      console.warn(
-        `Current user with ID ${currentUserId} not found in details array.`
-      );
-      return [];
-    }
-
-    const matchScores = userDetailsArray
-      .filter((user) => user?.id !== currentUserId)
-      .map((user) => {
-        let score = 0;
-
-        if (user.city === currentUser.city) score += 2;
-
-        const languageMatches = user.languages.filter((lang) =>
-          currentUser.languages.includes(lang)
-        ).length;
-        score += languageMatches * 1.5;
-
-        const hobbyMatches = user.hobbies.filter((hobby) =>
-          currentUser.hobbies.includes(hobby)
-        ).length;
-        score += hobbyMatches * 1.5;
-
-        return { id: user.id, score };
-      });
-
-    return matchScores;
-  };
-
-  useEffect(() => {
-    if (recommendationsWithDetails.length > 0 && currentUserId) {
-      console.log("Recommendations:", recommendationsWithDetails);
-      console.log("Current User ID:", currentUserId);
-      const matches = findMatches(currentUserId, recommendationsWithDetails);
-      setMatchedUserIds(matches);
-    }
-  }, [recommendationsWithDetails, currentUserId]);
-
-  const fetchRecommendations = async () => {
     try {
-      const token = localStorage.getItem("jwt");
-      const genderParam = genres !== "all" ? `?gender=${genres}` : "";
       const response = await fetch(
-        `${process.env.REACT_APP_SERVER_URL}/api/users/recommendations${genderParam}`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (response.status === 401) navigate("/");
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.message || "Failed to fetch recommendations."
-        );
-      }
-
-      return await response.json();
-    } catch (err) {
-      setError(err.message || "An unexpected error occurred.");
-      return [];
-    }
-  };
-
-  const fetchUserDetails = async (id) => {
-    try {
-      const token = localStorage.getItem("jwt");
-      const response = await fetch(
-        `${process.env.REACT_APP_SERVER_URL}/api/users/${id}/bio`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (response.ok) return await response.json();
-      console.error(`Failed to fetch user with ID ${id}`);
-      return null;
-    } catch (err) {
-      console.error(`Error fetching user with ID ${id}:`, err);
-      return null;
-    }
-  };
-
-  useEffect(() => {
-    const fetchAllData = async () => {
-      setLoading(true);
-
-      try {
-        const currentUserResponse = await fetch(
-          `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}/bio`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("jwt")}`,
-            },
-          }
-        );
-        const currentUserDetails = await currentUserResponse.json();
-
-        const ids = await fetchRecommendations();
-        setRecommendations(ids);
-
-        const detailsPromises = ids.map((id) => fetchUserDetails(id));
-        const details = await Promise.all(detailsPromises);
-
-        const validDetails = [
-          currentUserDetails,
-          ...details.filter((user) => {
-            return user && user.age >= ageRange[0] && user.age <= ageRange[1];
-          })
-        ];
-
-        setRecommendationsWithDetails(validDetails);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        setError("Failed to load recommendations");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAllData();
-  }, [navigate, ageRange, genres, currentUserId]);
-
-  useEffect(() => {
-    const fetchAndLogAges = async () => {
-      for (const { id } of matchedUserIds) {
-        const userDetails = await fetchUserDetails(id);
-      }
-    };
-
-    if (matchedUserIds.length > 0) {
-      fetchAndLogAges();
-    }
-  }, [matchedUserIds]);
-
-  useEffect(() => {
-    const fetchRecommendedUserData = async () => {
-      try {
-        const token = localStorage.getItem("jwt");
-        const userDataPromises = matchedUserIds.map(async ({ id, score }) => {
-          const userResponse = await fetch(
-            `${process.env.REACT_APP_SERVER_URL}/api/users/${id}`,
-            {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-          const userData = userResponse.ok ? await userResponse.json() : null;
-
-          const bioResponse = await fetch(
-            `${process.env.REACT_APP_SERVER_URL}/api/users/${id}/bio`,
-            {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-          const bioData = bioResponse.ok ? await bioResponse.json() : null;
-
-          if (userData && bioData) {
-            return { ...userData, id, score, genres: bioData.genres };
-          }
-
-          return null;
-        });
-
-        const recommendedUsers = await Promise.all(userDataPromises);
-        const validRecommendedUsers = recommendedUsers.filter(Boolean);
-
-        const nonConnectedUsers = validRecommendedUsers.filter(
-          (user) => !connections.includes(user.id)
-        );
-
-        const sortedUsers = nonConnectedUsers.sort((a, b) => b.score - a.score);
-        const filteredUsers = sortedUsers.filter(
-          (user) => !dismissed.includes(user.id)
-        );
-
-        setRecommendationsWithImage(filteredUsers);
-      } catch (error) {
-        console.error("Error fetching recommended user data:", error);
-      }
-    };
-
-    if (matchedUserIds.length > 0) {
-      fetchRecommendedUserData();
-    }
-  }, [matchedUserIds, dismissed]);
-  // console.log(
-  //   "recommendationsWithImage",
-  //   recommendationsWithImage.map(
-  //     (id, index) => recommendationsWithImage[index].id
-  //   )
-  // );
-  const handleDismiss = (dismissedId) => {
-    setRecommendationsWithImage((prevRecommendations) =>
-      prevRecommendations.filter((user) => user.id !== dismissedId)
-    );
-  };
-  useEffect(() => {
-    const fetchUser = async () => {
-      const token = localStorage.getItem("jwt");
-
-      const userResponse = await fetch(
-        `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}/dismissed`,
+        `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}/connections`,
         {
           method: "GET",
           headers: {
@@ -277,78 +58,138 @@ function RecommendationsMain({ currentUserId }) {
         }
       );
 
-      if (userResponse.status === 401) {
+      if (response.status === 401) {
         navigate("/me");
         return;
       }
 
-      let userData = null;
-
-      if (userResponse.ok) {
-        // Read response only once
-        userData = await userResponse.json();
-        setRecommendationsWithImage(userData);
-
-        const currentDismissed = userData.dismissed || [];
-        setDismissed(currentDismissed);
-      } else {
-        const errorData = await userResponse.json(); // Read the error message only once
-        console.error("Failed to fetch user data:", errorData);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to fetch connections.");
       }
-    };
 
-    fetchUser();
-  }, []);
+      const connectionsData = await response.json();
+      setConnections(connectionsData.connections);
+      await fetchBios(connectionsData.connections, token);
+
+      // Fetch image for each connectionId
+      const imagePromises = connectionsData.connections.map(
+        async (connectionId) => {
+          const image = await fetchUserImage(connectionId);
+          return { connectionId, image };
+        }
+      );
+
+      const images = await Promise.all(imagePromises);
+      const imagesMap = images.reduce((acc, { connectionId, image }) => {
+        acc[connectionId] = image;
+        return acc;
+      }, {});
+      setUserImages(imagesMap);
+    } catch (err) {
+      setError(err.message || "An unexpected error occurred.");
+    }
+  };
+
+  const fetchBios = async (connectionIds, token) => {
+    const bioPromises = connectionIds.map(async (connectionId) => {
+      const bioResponse = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/api/users/${connectionId}/bio`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (bioResponse.ok) {
+        const bioData = await bioResponse.json();
+        setBios((prevBios) => ({
+          ...prevBios,
+          [connectionId]: bioData,
+        }));
+      } else {
+        console.error(`Failed to fetch bio for connection ${connectionId}`);
+      }
+    });
+
+    await Promise.all(bioPromises);
+    setLoading(false);
+  };
+
+  const fetchUserImage = async (connectionId) => {
+    try {
+      const token = localStorage.getItem("jwt");
+      const response = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/api/users/${connectionId}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 401) {
+        navigate("/me");
+        return;
+      }
+      if (response.ok) {
+        const user = await response.json();
+        return user.image;
+      }
+
+      console.error(
+        `Failed to fetch image for user with connectionId ${connectionId}`
+      );
+    } catch (err) {
+      console.error(
+        `Error fetching user image with connectionId ${connectionId}:`,
+        err
+      );
+    }
+  };
 
   useEffect(() => {
-    const getConnections = async (currentUserId) => {
-      try {
-        const token = localStorage.getItem("jwt");
-        const updatedConnectionResponse = await fetch(
-          `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}/connections`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (!updatedConnectionResponse.ok) {
-          const errorUpdatedResponse = await updatedConnectionResponse.json();
-          console.error(
-            "Failed to fetch updated connections:",
-            errorUpdatedResponse
-          );
-          return;
-        }
-
-        // Parse the response before updating state
-        const updatedConnectionData = await updatedConnectionResponse.json();
-        console.log(
-          "updatedConnectionData in recommendations",
-          updatedConnectionData
-        );
-
-        // Update the connections state
-        setConnections((prevConnections) => {
-          const newConnections = [
-            ...prevConnections,
-            ...updatedConnectionData.connections,
-          ];
-          return Array.from(new Set(newConnections));
-        });
-      } catch (error) {
-        console.error("Error fetching connections:", error);
-      }
-    };
-
-    if (currentUserId) {
-      getConnections(currentUserId);
-    }
+    fetchConnections();
   }, [currentUserId]);
 
+  const handleOpenModal = async (userId) => {
+    const userBio = bios[userId];
+    if (userBio) {
+      setSelectedUser(userBio);
+
+      // Fetch the user image
+      const userImage = await fetchUserImage(userId);
+      setSelectedUser((prevUser) => ({
+        ...prevUser,
+        image: userImage,
+      }));
+
+      setOpenModal(true);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setOpenModal(false);
+    setSelectedUser(null);
+  };
+  const handleOpenChatModal = (userId) => {
+    const userBio = bios[userId];
+    if (userBio) {
+      setSelectedUser(userBio);
+      setSelectedUserId(userBio.id);
+      setOpenChatModal(true); // Open the chat modal
+    }
+  };
+
+  const handleCloseChatModal = () => {
+    setOpenChatModal(false);
+    setSelectedUser(null);
+    setSelectedUserId(null);
+  };
   return (
     <Box sx={{ flexGrow: 1, padding: 2 }}>
       <Typography
@@ -358,33 +199,10 @@ function RecommendationsMain({ currentUserId }) {
           textAlign: "center",
           mb: 3,
           color: "rgb(44,44,44)",
-          // letterSpacing: 3,
         }}
       >
-        Recommendations
+        Connections
       </Typography>
-      <Card
-        sx={{
-          padding: 3,
-          boxShadow: 2,
-          backgroundColor: "#f0efef",
-          color: "rgb(44,44,44)",
-          marginBottom: 4,
-          display: "flex",
-          flexDirection: { xs: "column", md: "row" },
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <Box sx={{ width: 200 }}>
-          <AgeRangeSlider value={ageRange} onChange={setAgeRange} />
-        </Box>
-
-        <Box sx={{ width: 200 }}>
-          <GenderFilter value={genres} onChange={setgenres} />
-        </Box>
-      </Card>
-
       {loading ? (
         <Typography sx={{ mt: 5 }} textAlign="center">
           Loading...
@@ -393,32 +211,28 @@ function RecommendationsMain({ currentUserId }) {
         <Typography sx={{ mt: 5 }} color="error" textAlign="center">
           {error}
         </Typography>
-      ) : matchedUserIds.length > 0 && recommendationsWithImage.length > 0 ? (
-        <Grid
-          container
-          spacing={{ xs: 2, md: 3 }}
-          columns={{ xs: 4, sm: 8, md: 12 }}
-        >
-          {recommendationsWithImage
-            .filter(
-              (user) =>
-                user.score >= 1
-            )
-            .slice(0, 20)
-            .map((user, index) => (
-              <Grid size={{ xs: 12, sm: 4, md: 4 }} key={`${user.id}-${index}`}>
+      ) : (
+        <Grid container spacing={2} justifyContent="center">
+          {connections.map((connectionId, index) => {
+            const connectionBio = bios[connectionId];
+            if (!connectionBio) return null;
+
+            return (
+              <Grid xs={12} sm={4} md={4} key={index}>
                 <Card
                   sx={{
-                    height: 250,
+                    padding: 5,
+                    boxShadow: 2,
+                    backgroundColor: "#f0efef",
+                    color: "rgb(44,44,44)",
                     display: "flex",
                     flexDirection: "column",
-                    justifyContent: "space-between",
                     alignItems: "center",
-                    boxShadow: 3,
-                    backgroundColor: "#ffffff",
-                    padding: 2,
+                    justifyContent: "center",
+                    userSelect: "none",
+                    WebkitUserSelect: "none",
+                    msUserSelect: "none",
                   }}
-                  className="animate__animated  animate__fadeIn"
                 >
                   <Box
                     display="flex"
@@ -426,54 +240,178 @@ function RecommendationsMain({ currentUserId }) {
                     justifyContent="center"
                     mt={2}
                   >
-                    {user.genres === "Male" || user.genres === "Female" ? (
-                      <StyledBadge badgeContent={user.genres}>
-                        <Avatar
-                          src={handleImageDisplay(user.image)}
-                          sx={{ width: 100, height: 100, boxShadow: 3 }}
-                        />
-                      </StyledBadge>
-                    ) : (
+                    <StyledBadge badgeContent={connectionBio.genres}>
                       <Avatar
-                        src={handleImageDisplay(user.image)}
+                        src={handleImageDisplay(userImages[connectionId])}
                         sx={{ width: 100, height: 100, boxShadow: 3 }}
                       />
-                    )}
-                  </Box>{" "}
-                  <Typography variant="h5" sx={{ fontWeight: 600, mt: 2 }}>
-                    {user.name || "Unknown User"}
-                  </Typography>{" "}
-                  <Box display="flex" alignItems="center" mt={1}>
-                    <Rating
-                      size="small"
-                      value={Math.min(user.score, 5)}
-                      max={7}
-                      precision={0.5}
-                      emptyIcon={
-                        <StarIcon
-                          style={{ opacity: 0.55 }}
-                          fontSize="inherit"
-                        />
-                      }
-                      readOnly
-                    />
+                    </StyledBadge>
                   </Box>
-                  <ConnectionButtons
-                    choosenId={user.id}
-                    currentUserId={currentUserId}
-                    onDismiss={handleDismiss}
-                  />
+                  <Typography variant="h5" sx={{ fontWeight: 600, mt: 2 }}>
+                    {connectionBio.name || "Unknown User"}
+                  </Typography>
+                  <Typography sx={{ mt: 1 }}>
+                    Age: {connectionBio.age}
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      mt: 3,
+                      gap: 1,
+                    }}
+                  >
+                    <Button
+                      variant="outlined"
+                      sx={{
+                        color: "#f4f3f3",
+                        backgroundColor: "rgb(44,44,44)",
+                        fontWeight: 600,
+                        border: "none",
+                        fontFamily: "Poppins",
+                        "&:hover": { backgroundColor: "rgb(72, 71, 71)" },
+                      }}
+                      onClick={() => handleOpenModal(connectionId)}
+                    >
+                      Profile
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      sx={{
+                        color: "#f4f3f3",
+                        backgroundColor: "rgb(44,44,44)",
+                        fontWeight: 600,
+                        border: "none",
+                        fontFamily: "Poppins",
+                        "&:hover": { backgroundColor: "rgb(72, 71, 71)" },
+                      }}
+                      onClick={() => handleOpenChatModal(connectionId)}
+                    >
+                      <TelegramIcon />
+                    </Button>
+                  </Box>
                 </Card>
               </Grid>
-            ))}
+            );
+          })}
         </Grid>
-      ) : (
-        <Typography textAlign="center">
-          No recommendations available.
-        </Typography>
       )}
+
+      {/* <ChatModal open={openModal} onClose={handleCloseModal} /> */}
+      {/* Modal for Profile View */}
+      <Modal
+        open={openModal}
+        onClose={handleCloseModal}
+        sx={{
+          "& .MuiBackdrop-root": {
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+          },
+        }}
+      >
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)", // Center the modal
+            width: "80%", // Adjust modal width
+            bgcolor: "#f0efef",
+            boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
+            borderRadius: "8px",
+            p: 4,
+          }}
+        >
+          {selectedUser && (
+            <>
+              <Typography
+                variant="h4"
+                align="center"
+                sx={{ fontFamily: "Poppins", fontWeight: 600 }}
+              >
+                Biographical
+              </Typography>
+              <Divider sx={{ my: 2, borderColor: "black" }} />
+
+              <Typography
+                variant="h5"
+                align="center"
+                sx={{ fontWeight: 600, mt: 2 }}
+              >
+                {selectedUser.name} {selectedUser.lastname}
+              </Typography>
+
+              <Typography
+                variant="h6"
+                align="center"
+                sx={{ fontWeight: 600, mt: 2 }}
+              >
+                Age
+              </Typography>
+              <Typography variant="body1" align="center">
+                {selectedUser.age}
+              </Typography>
+
+              <Typography
+                variant="h6"
+                align="center"
+                sx={{ fontWeight: 600, mt: 2 }}
+              >
+                Gender
+              </Typography>
+              <Typography variant="body1" align="center">
+                {selectedUser.genres}
+              </Typography>
+
+              <Typography
+                variant="h6"
+                align="center"
+                sx={{ fontWeight: 600, mt: 2 }}
+              >
+                City
+              </Typography>
+              <Typography variant="body1" align="center">
+                {selectedUser.city}
+              </Typography>
+
+              <Typography
+                variant="h6"
+                align="center"
+                sx={{ fontWeight: 600, mt: 2 }}
+              >
+                Hobbies
+              </Typography>
+              <Typography variant="body1" align="center">
+                {selectedUser.hobbies?.join(", ") || ""}
+              </Typography>
+
+              <Typography
+                variant="h6"
+                align="center"
+                sx={{ fontWeight: 600, mt: 2 }}
+              >
+                Languages
+              </Typography>
+              <Box sx={{ textAlign: "center" }}>
+                {selectedUser.languages?.map((lang, index) => (
+                  <Chip
+                    key={index}
+                    label={languages[lang]}
+                    sx={{ m: 0.5, fontSize: "2rem" }}
+                  />
+                ))}
+              </Box>
+            </>
+          )}
+        </Box>
+      </Modal>
+      <ChatModal
+        open={openChatModal}
+        onClose={handleCloseChatModal}
+        selectedUser={selectedUser}
+        selectedUserId={selectedUserId}
+        currentUserId={currentUserId}
+      />
     </Box>
   );
 }
 
-export default RecommendationsMain;
+export default ConnectionsMain;

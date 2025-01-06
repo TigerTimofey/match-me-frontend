@@ -1,21 +1,21 @@
-import React, { useEffect, useState } from "react";
+import TelegramIcon from "@mui/icons-material/Telegram";
 import {
-  Box,
-  Card,
-  Typography,
   Avatar,
-  Button,
   Badge,
-  Modal,
-  Divider,
+  Box,
+  Button,
+  Card,
   Chip,
+  Divider,
+  Modal,
+  styled,
+  Typography,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { handleImageDisplay } from "../../utils/handleImageDisplay";
-import { styled } from "@mui/material";
 import { languages } from "../../local-variables/languages";
-import TelegramIcon from "@mui/icons-material/Telegram";
+import { handleImageDisplay } from "../../utils/handleImageDisplay";
 import ChatModal from "./components/chat/ChatModal";
 
 const StyledBadge = styled(Badge)(({ theme }) => ({

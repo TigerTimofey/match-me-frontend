@@ -8,6 +8,7 @@
     "@mui/icons-material": "^6.2.0",
     "@mui/material": "^6.2.0",
     "@mui/styled-engine-sc": "^6.2.0",
+    "@stomp/stompjs": "^7.0.0",
     "animate.css": "^4.1.1",
     "cra-template": "1.2.0",
     "dotenv": "^16.4.7",
@@ -16,6 +17,7 @@
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.0.2",
     "react-scripts": "5.0.1",
+    "sockjs-client": "^1.6.1",
     "styled-components": "^6.1.13"
   },
   "scripts": {

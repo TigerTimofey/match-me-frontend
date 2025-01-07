@@ -16,7 +16,9 @@
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.0.2",
     "react-scripts": "5.0.1",
-    "styled-components": "^6.1.13"
+    "styled-components": "^6.1.13",
+    "@stomp/stompjs": "^7.0.0",
+    "sockjs-client": "^1.6.1"
   },
   "scripts": {
     "start": "react-scripts start",

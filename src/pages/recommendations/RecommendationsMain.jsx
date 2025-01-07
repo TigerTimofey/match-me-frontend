@@ -39,7 +39,7 @@ function RecommendationsMain({ currentUserId }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [matchedUserIds, setMatchedUserIds] = useState([]);
-  const [ageRange, setAgeRange] = useState([0, 99]);
+  const [ageRange, setAgeRange] = useState([1, 99]);
   const [genres, setgenres] = useState("all");
   const [dismissed, setDismissed] = useState([]);
   const [connections, setConnections] = useState([]);
@@ -162,12 +162,10 @@ function RecommendationsMain({ currentUserId }) {
         const detailsPromises = ids.map((id) => fetchUserDetails(id));
         const details = await Promise.all(detailsPromises);
 
-        const validDetails = [
-          currentUserDetails,
-          ...details.filter((user) => {
-            return user && user.age >= ageRange[0] && user.age <= ageRange[1];
-          })
-        ];
+      const validDetails = details.filter((user) => {
+        return user?.age >= ageRange[0] && user?.age <= ageRange[1];
+      });
+
 
         setRecommendationsWithDetails(validDetails);
       } catch (error) {
@@ -447,7 +445,7 @@ function RecommendationsMain({ currentUserId }) {
                     <Rating
                       size="small"
                       value={Math.min(user.score, 5)}
-                      max={7}
+                      max={5}
                       precision={0.5}
                       emptyIcon={
                         <StarIcon

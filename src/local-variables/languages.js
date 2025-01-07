@@ -105,5 +105,4 @@ export const languages = {
   Yiddish: "🇮🇱",
   Yoruba: "🇳🇬",
   Zulu: "🇿🇦",
-  Others: "🌎",
 };

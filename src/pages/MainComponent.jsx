@@ -3,21 +3,22 @@ import { useNavigate } from "react-router-dom";
 
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import {
-    Alert,
-    AppBar,
-    Avatar,
-    Badge,
-    Box,
-    Button,
-    CircularProgress,
-    Menu,
-    MenuItem,
-    Modal,
-    styled,
-    Toolbar,
-    Typography,
-    useMediaQuery,
-    useTheme,
+  Alert,
+  AppBar,
+  Avatar,
+  Badge,
+  Box,
+  Button,
+  CircularProgress,
+  Menu,
+  MenuItem,
+  Modal,
+  styled,
+  Toolbar,
+  Typography,
+  useMediaQuery,
+  useTheme,
+
 } from "@mui/material";
 import Drawer from "./components/Drawer";
 import UserBioCard from "./user-data/UserBio";

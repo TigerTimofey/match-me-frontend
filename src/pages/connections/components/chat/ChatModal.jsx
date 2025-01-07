@@ -13,6 +13,7 @@ const ChatModal = ({
   const [messages, setMessages] = useState([]);
   const [messageInput, setMessageInput] = useState("");
   const [isConnected, setIsConnected] = useState(false);
+  const [isUserOnline, setIsUserOnline] = useState(false);
   const stompClient = useRef(null);
 
   useEffect(() => {
@@ -24,11 +25,60 @@ const ChatModal = ({
     };
   }, [open, selectedUserId]);
 
-  const disconnectWebSocket = () => {
-    if (stompClient.current && stompClient.current.connected) {
-      stompClient.current.deactivate();
-      setIsConnected(false);
+  useEffect(() => {
+    if (!open) {
+      console.log('Resetting online status due to modal close');
+      setIsUserOnline(false);
     }
+  }, [open]);
+
+  useEffect(() => {
+    if (open && selectedUserId && stompClient.current?.connected) {
+      console.log('Requesting status check for user:', selectedUserId);
+      stompClient.current.publish({
+        destination: '/app/user.status.check',
+        body: JSON.stringify({
+          sender: currentUserId,
+          type: 'STATUS_CHECK'
+        })
+      });
+    }
+  }, [open, selectedUserId, currentUserId]);
+
+  useEffect(() => {
+    console.log('Selected user changed to:', selectedUserId);
+    if (selectedUserId && stompClient.current?.connected) {
+      requestUserStatus();
+    }
+  }, [selectedUserId]);
+
+  const sendOfflineStatus = () => {
+    if (stompClient.current && stompClient.current.connected) {
+      try {
+        console.log('Sending OFFLINE status for user:', currentUserId);
+        const statusMessage = {
+          sender: String(currentUserId),
+          type: 'STATUS',
+          content: 'OFFLINE'
+        };
+        console.log('Status message:', statusMessage);
+        stompClient.current.publish({
+          destination: '/app/user.offline',
+          body: JSON.stringify(statusMessage)
+        });
+      } catch (error) {
+        console.error('Error sending offline status:', error);
+      }
+    }
+  };
+
+  const disconnectWebSocket = () => {
+    if (stompClient.current?.connected) {
+      sendOfflineStatus();
+      stompClient.current.deactivate();
+    }
+    setIsConnected(false);
+    setIsUserOnline(false);
   };
 
   const connectWebSocket = () => {
@@ -62,7 +112,34 @@ const ChatModal = ({
           setMessages(prev => [...prev, receivedMessage]);
         });
 
-        sendJoinMessage();
+        stompClient.current.subscribe('/topic/status', (statusMessage) => {
+          const status = JSON.parse(statusMessage.body);
+          console.log('Received status message:', status);
+          console.log('Current selectedUserId:', selectedUserId);
+          console.log('Comparing with sender:', status.sender);
+          console.log('Current online status:', isUserOnline);
+          
+          if (status.sender === String(selectedUserId)) {
+            const newStatus = status.content === 'ONLINE';
+            console.log(`Updating status for user ${selectedUserId} to ${newStatus}`);
+            setIsUserOnline(newStatus);
+          } else {
+            console.log('Status message is not for selected user');
+          }
+        });
+
+        sendOnlineStatus();
+        if (selectedUserId) {
+          requestUserStatus();
+        }
+      };
+
+      stompClient.current.onWebSocketClose = () => {
+        if (stompClient.current?.connected) {
+          sendOfflineStatus();
+        }
+        setIsConnected(false);
+        setIsUserOnline(false);
       };
 
       stompClient.current.activate();
@@ -75,11 +152,12 @@ const ChatModal = ({
   const sendJoinMessage = () => {
     if (stompClient.current && stompClient.current.connected) {
       try {
+        console.log('Sending JOIN message from:', currentUserId, 'to:', selectedUserId);
         stompClient.current.publish({
           destination: '/app/chat.join',
           body: JSON.stringify({
-            sender: currentUserId,
-            recipient: selectedUserId,
+            sender: String(currentUserId),
+            recipient: String(selectedUserId),
             type: 'JOIN'
           })
         });
@@ -87,6 +165,38 @@ const ChatModal = ({
         console.error('Error sending join message:', error);
       }
     }
+  };
+
+  const sendOnlineStatus = () => {
+    if (stompClient.current && stompClient.current.connected) {
+        try {
+            console.log('Sending ONLINE status for user:', currentUserId);
+            const statusMessage = {
+                sender: String(currentUserId),
+                type: 'STATUS',
+                content: 'ONLINE'
+            };
+            console.log('Sending status message:', statusMessage);
+            stompClient.current.publish({
+                destination: '/app/user.online',
+                body: JSON.stringify(statusMessage)
+            });
+        } catch (error) {
+            console.error('Error sending online status:', error);
+        }
+    }
+  };
+
+  const requestUserStatus = () => {
+    console.log('Requesting status for user:', selectedUserId);
+    stompClient.current.publish({
+      destination: '/app/user.status.check',
+      body: JSON.stringify({
+        sender: currentUserId,
+        recipient: selectedUserId,
+        type: 'STATUS'
+      })
+    });
   };
 
   const sendMessage = () => {
@@ -129,13 +239,30 @@ const ChatModal = ({
       >
         {selectedUser && (
           <>
-            <Typography
-              variant="h4"
-              align="center"
-              sx={{ fontFamily: "Poppins", fontWeight: 600 }}
-            >
-              Chat with {selectedUser.name}
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+              <Typography
+                variant="h4"
+                sx={{ fontFamily: "Poppins", fontWeight: 600 }}
+              >
+                Chat with {selectedUser.name}
+              </Typography>
+              <Box
+                sx={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: '50%',
+                  bgcolor: isUserOnline ? 'success.main' : 'grey.400',
+                  display: 'inline-block',
+                }}
+              />
+              <Typography
+                variant="body2"
+                sx={{ color: isUserOnline ? 'success.main' : 'grey.600' }}
+              >
+                {isUserOnline ? 'online' : 'offline'}
+              </Typography>
+            </Box>
+            
             <Divider sx={{ my: 2, borderColor: "black" }} />
             
             {/* Статус подключения */}

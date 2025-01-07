@@ -1,21 +1,23 @@
-import React, { useEffect, useState } from "react";
+import TelegramIcon from "@mui/icons-material/Telegram";
 import {
-  Box,
-  Card,
-  Typography,
-  Avatar,
-  Button,
-  Badge,
-  Modal,
-  Divider,
-  Chip,
+    Avatar,
+    Badge,
+    Box,
+    Button,
+    Card,
+    Chip,
+    Divider,
+    Modal,
+    styled,
+    Typography,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
+import { Client } from '@stomp/stompjs';
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { handleImageDisplay } from "../../utils/handleImageDisplay";
-import { styled } from "@mui/material";
+import SockJS from 'sockjs-client';
 import { languages } from "../../local-variables/languages";
-import TelegramIcon from "@mui/icons-material/Telegram";
+import { handleImageDisplay } from "../../utils/handleImageDisplay";
 import ChatModal from "./components/chat/ChatModal";
 
 const StyledBadge = styled(Badge)(({ theme }) => ({
@@ -42,6 +44,7 @@ function ConnectionsMain({ currentUserId }) {
   const [openChatModal, setOpenChatModal] = useState(false);
   const [userImages, setUserImages] = useState({});
   const [selectedUserId, setSelectedUserId] = useState(null);
+  const [onlineUsers, setOnlineUsers] = useState(new Set());
 
   const fetchConnections = async () => {
     const token = localStorage.getItem("jwt");
@@ -156,6 +159,43 @@ function ConnectionsMain({ currentUserId }) {
     fetchConnections();
   }, [currentUserId]);
 
+  useEffect(() => {
+    const sockjs = new SockJS(`${process.env.REACT_APP_SERVER_URL}/ws?userId=${currentUserId}`);
+    
+    const stompClient = new Client({
+        webSocketFactory: () => sockjs,
+        debug: function (str) {
+            console.log(str);
+        },
+        reconnectDelay: 5000,
+        heartbeatIncoming: 4000,
+        heartbeatOutgoing: 4000
+    });
+
+    stompClient.onConnect = () => {
+        stompClient.subscribe('/topic/status', (statusMessage) => {
+            const status = JSON.parse(statusMessage.body);
+            setOnlineUsers(prev => {
+                const newSet = new Set(prev);
+                if (status.content === 'ONLINE') {
+                    newSet.add(status.sender);
+                } else {
+                    newSet.delete(status.sender);
+                }
+                return newSet;
+            });
+        });
+    };
+
+    stompClient.activate();
+
+    return () => {
+        if (stompClient.connected) {
+            stompClient.deactivate();
+        }
+    };
+  }, [currentUserId]);
+
   const handleOpenModal = async (userId) => {
     const userBio = bios[userId];
     if (userBio) {
@@ -179,9 +219,10 @@ function ConnectionsMain({ currentUserId }) {
   const handleOpenChatModal = (userId) => {
     const userBio = bios[userId];
     if (userBio) {
-      setSelectedUser(userBio);
-      setSelectedUserId(userBio.id);
-      setOpenChatModal(true); // Open the chat modal
+        console.log('Opening chat with user:', userId, 'type:', typeof userId);
+        setSelectedUser(userBio);
+        setSelectedUserId(String(userId));
+        setOpenChatModal(true);
     }
   };
 
@@ -289,6 +330,19 @@ function ConnectionsMain({ currentUserId }) {
                       <TelegramIcon />
                     </Button>
                   </Box>
+                  {onlineUsers.has(connectionId.toString()) && (
+                    <Box 
+                      component="span"
+                      sx={{ 
+                        width: 10, 
+                        height: 10, 
+                        borderRadius: '50%', 
+                        bgcolor: 'success.main',
+                        display: 'inline-block',
+                        ml: 1
+                      }} 
+                    />
+                  )}
                 </Card>
               </Grid>
             );

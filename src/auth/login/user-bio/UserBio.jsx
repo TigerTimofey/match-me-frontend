@@ -133,7 +133,7 @@ const UserBio = ({ token }) => {
                 justifyContent: "center",
                 alignItems: "center",
                 textAlign: "center",
-                color: "#1A73E8",
+                color: "rgb(44,44,44)",
                 marginBottom: 3,
                 fontWeight: 600,
               }}
@@ -165,17 +165,9 @@ const UserBio = ({ token }) => {
                 gap: 2,
               }}
             >
-              {/* <TextField
-                name="city"
-                label="City"
-                variant="outlined"
-                fullWidth
-                value={formData.city}
-                onChange={handleInputChange}
-              /> */}
               <Autocomplete
                 options={Object.keys(locations)}
-                getOptionLabel={(option) => (option ? locations[option] : "")} // Ensure it handles undefined or empty string
+                getOptionLabel={(option) => (option ? locations[option] : "")}
                 value={formData.city || ""}
                 onChange={(event, newValue) => {
                   setFormData((prev) => ({
@@ -189,7 +181,6 @@ const UserBio = ({ token }) => {
                     label="City"
                     variant="outlined"
                     fullWidth
-                    sx={{ mb: 2 }}
                   />
                 )}
               />
@@ -271,23 +262,46 @@ const UserBio = ({ token }) => {
                   />
                 )}
               />
-              {/* 
-              <TextField
-                name="hobbies"
-                label="Hobbies (comma-separated)"
-                variant="outlined"
-                fullWidth
-                value={formData.hobbies}
-                onChange={handleInputChange}
-              /> */}
 
-              <Button
-                variant="contained"
-                fullWidth
-                onClick={() => setShowUserProfile(true)}
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  gap: 2,
+                }}
               >
-                Next
-              </Button>
+                {" "}
+                <Button
+                  variant="contained"
+                  color="primary"
+                  size="small"
+                  sx={{
+                    backgroundColor: "rgb(44,44,44)",
+                    color: "#f4f3f3",
+                    fontWeight: 600,
+                    fontSize: "1rem",
+                    fontFamily: "Poppins",
+                  }}
+                  fullWidth
+                  onClick={() => window.location.reload()}
+                >
+                  Back
+                </Button>
+                <Button
+                  size="small"
+                  sx={{
+                    backgroundColor: "rgb(44,44,44)",
+                    color: "#f4f3f3",
+                    fontWeight: 600,
+                    fontSize: "1rem",
+                    fontFamily: "Poppins",
+                  }}
+                  fullWidth
+                  onClick={() => setShowUserProfile(true)}
+                >
+                  Next
+                </Button>
+              </Box>
             </Box>
           </Card>
         </div>

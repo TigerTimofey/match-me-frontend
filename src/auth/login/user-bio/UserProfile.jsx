@@ -227,7 +227,7 @@ const UserProfile = ({ token }) => {
                 justifyContent: "center",
                 alignItems: "center",
                 textAlign: "center",
-                color: "#1A73E8",
+                color: "rgb(44,44,44)",
                 marginBottom: 3,
                 fontWeight: 600,
               }}
@@ -294,6 +294,10 @@ const UserProfile = ({ token }) => {
                   role={undefined}
                   variant="outlined"
                   tabIndex={-1}
+                  sx={{
+                    color: "rgb(44,44,44)",
+                    borderColor: "rgb(44,44,44)",
+                  }}
                   startIcon={<CloudUploadIcon />}
                 >
                   Upload files
@@ -326,12 +330,34 @@ const UserProfile = ({ token }) => {
                 {" "}
                 <Button
                   variant="contained"
+                  color="primary"
+                  size="small"
+                  sx={{
+                    backgroundColor: "rgb(44,44,44)",
+                    color: "#f4f3f3",
+                    fontWeight: 600,
+                    fontSize: "1rem",
+                    fontFamily: "Poppins",
+                  }}
                   fullWidth
                   onClick={() => setShowUserBio(true)}
                 >
                   Back
                 </Button>
-                <Button variant="contained" fullWidth onClick={updateUserBio}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  size="small"
+                  sx={{
+                    backgroundColor: "rgb(44,44,44)",
+                    color: "#f4f3f3",
+                    fontWeight: 600,
+                    fontSize: "1rem",
+                    fontFamily: "Poppins",
+                  }}
+                  fullWidth
+                  onClick={updateUserBio}
+                >
                   Confirm
                 </Button>
               </Box>

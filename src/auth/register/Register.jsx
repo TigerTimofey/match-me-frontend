@@ -1,30 +1,26 @@
-import React from "react";
-import { Button, Box, Typography, Card, Alert } from "@mui/material";
-import FormFields from "./user-data/FormFields";
-import LoginPage from "../login/Login";
-import "animate.css";
+import React, { useState, useEffect } from "react";
+import { TextField, Button, Box, Typography, Card, Alert } from "@mui/material";
+import "animate.css"; // Import animate.css for animations
 
-const RegisterPage = () => {
-  const [showLogin, setShowLogin] = React.useState(false);
-  const [animateClass, setAnimateClass] = React.useState("");
-  const [formData, setFormData] = React.useState({
+const RegisterPage = ({ onBackToLogin }) => {
+  const [animateClass, setAnimateClass] = useState(""); // State for animation class
+  const [formData, setFormData] = useState({
     name: "",
     lastname: "",
     username: "",
     password: "",
   });
-  const [formErrors, setFormErrors] = React.useState({
+  const [formErrors, setFormErrors] = useState({
     name: false,
     lastname: false,
     username: false,
     password: false,
   });
-  const [message, setMessage] = React.useState({ type: "", text: "" });
+  const [message, setMessage] = useState({ type: "", text: "" });
 
-  const handleLoginClick = () => {
-    setAnimateClass("animate__animated animate__zoomOut animate__delay-0.5");
-    setTimeout(() => setShowLogin(true), 600);
-  };
+  useEffect(() => {
+    setAnimateClass("animate__animated animate__fadeIn animate__delay-0.5"); // Apply fadeIn effect on mount
+  }, []);
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
@@ -83,7 +79,7 @@ const RegisterPage = () => {
                   textDecoration: "underline",
                   cursor: "pointer",
                 }}
-                onClick={() => setShowLogin(true)}
+                onClick={onBackToLogin}
               >
                 Login
               </span>
@@ -102,19 +98,19 @@ const RegisterPage = () => {
     }
   };
 
-  return showLogin ? (
-    <div className="animate__animated animate__zoomIn animate__delay-0.5">
-      <LoginPage />
-    </div>
-  ) : (
+  return (
     <Box
       sx={{
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
+        height: "100vh",
+        backgroundColor: "#7c7c7c",
       }}
     >
       <div className={animateClass}>
+        {" "}
+        {/* Add fadeIn animation */}
         <Card
           sx={{
             padding: 5,
@@ -155,35 +151,77 @@ const RegisterPage = () => {
               {message.text}
             </Alert>
           )}
-          <FormFields
-            formData={formData}
-            handleInputChange={handleInputChange}
-            formErrors={formErrors}
-          />
-          <Button
-            variant="contained"
-            color="primary"
-            size="small"
+          <Box
             sx={{
-              mt: 2,
-              backgroundColor: "rgb(44,44,44)",
-              color: "#f4f3f3",
-              fontWeight: 600,
-              fontSize: "1.2rem",
-              fontFamily: "Poppins",
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
             }}
-            fullWidth
-            onClick={handleRegister}
           >
-            Sign Up
-          </Button>
+            <TextField
+              name="name"
+              label="First Name"
+              variant="outlined"
+              fullWidth
+              value={formData.name}
+              onChange={handleInputChange}
+              error={formErrors.name}
+              helperText={formErrors.name && "First name is required"}
+            />
+            <TextField
+              name="lastname"
+              label="Last Name"
+              variant="outlined"
+              fullWidth
+              value={formData.lastname}
+              onChange={handleInputChange}
+              error={formErrors.lastname}
+              helperText={formErrors.lastname && "Last name is required"}
+            />
+            <TextField
+              name="username"
+              label="Email"
+              variant="outlined"
+              fullWidth
+              value={formData.username}
+              onChange={handleInputChange}
+              error={formErrors.username}
+              helperText={formErrors.username && "Email is required"}
+            />
+            <TextField
+              name="password"
+              label="Password"
+              type="password"
+              variant="outlined"
+              fullWidth
+              value={formData.password}
+              onChange={handleInputChange}
+              error={formErrors.password}
+              helperText={formErrors.password && "Password is required"}
+            />
+            <Button
+              variant="contained"
+              sx={{
+                backgroundColor: "rgb(44,44,44)",
+                color: "#f4f3f3",
+                fontWeight: 600,
+                fontSize: "1rem",
+                fontFamily: "Poppins",
+                mt: 2,
+              }}
+              fullWidth
+              onClick={handleRegister}
+            >
+              Sign Up
+            </Button>
+          </Box>
           <Typography
             variant="body2"
             sx={{ textAlign: "center", marginTop: "20px" }}
           >
             Already have an account?{" "}
             <span
-              onClick={handleLoginClick}
+              onClick={onBackToLogin}
               style={{
                 color: "#1A73E8",
                 cursor: "pointer",

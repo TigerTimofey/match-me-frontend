@@ -5,7 +5,7 @@ import RegisterPage from "../register/Register";
 import UserBio from "./user-bio/UserBio";
 import { useNavigate } from "react-router-dom";
 
-const LoginPage = () => {
+const LoginPage = ({ onCreateAccount }) => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = React.useState({
@@ -24,8 +24,8 @@ const LoginPage = () => {
   const [token, setToken] = React.useState("");
 
   const handleCreateAccountClick = () => {
-    setAnimateClass("animate__animated animate__zoomOut animate__delay-0.5");
-    setTimeout(() => setShowRegister(true), 600);
+    setAnimateClass("animate__animated animate__fadeOut animate__delay-0.5");
+    setTimeout(() => onCreateAccount(), 100);
   };
 
   const handleInputChange = (event) => {
@@ -119,11 +119,11 @@ const LoginPage = () => {
       }}
     >
       {showRegister ? (
-        <div className="animate__animated animate__zoomIn animate__delay-0.5">
-          <RegisterPage />
+        <div className="animate__animated animate__fadeIn animate__delay-0.5">
+          <RegisterPage onBackToLogin={onCreateAccount} />
         </div>
       ) : showBio ? (
-        <div className="animate__animated animate__zoomIn animate__delay-0.5">
+        <div className="animate__animated animate__fadeIn animate__delay-0.5">
           <UserBio token={token} />
         </div>
       ) : (
@@ -201,8 +201,9 @@ const LoginPage = () => {
                   backgroundColor: "rgb(44,44,44)",
                   color: "#f4f3f3",
                   fontWeight: 600,
-                  fontSize: "1.2rem",
+                  fontSize: "1rem",
                   fontFamily: "Poppins",
+                  mt: 2,
                 }}
                 fullWidth
                 onClick={handleLogin}

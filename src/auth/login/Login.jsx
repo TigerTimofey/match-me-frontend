@@ -142,7 +142,7 @@ const LoginPage = () => {
               component="h1"
               sx={{
                 textAlign: "center",
-                color: "#1A73E8",
+                color: "rgb(44,44,44)",
                 marginBottom: 3,
                 fontWeight: 600,
               }}
@@ -193,7 +193,20 @@ const LoginPage = () => {
                 onChange={handleInputChange}
                 required
               />
-              <Button variant="contained" fullWidth onClick={handleLogin}>
+              <Button
+                variant="contained"
+                color="primary"
+                size="small"
+                sx={{
+                  backgroundColor: "rgb(44,44,44)",
+                  color: "#f4f3f3",
+                  fontWeight: 600,
+                  fontSize: "1.2rem",
+                  fontFamily: "Poppins",
+                }}
+                fullWidth
+                onClick={handleLogin}
+              >
                 Sign In
               </Button>
               <Typography variant="body2" sx={{ textAlign: "center" }}>

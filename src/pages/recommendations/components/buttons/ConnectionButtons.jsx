@@ -22,7 +22,10 @@ function ConnectionButtons({ choosenId, currentUserId, onDismiss }) {
           },
         }
       );
-      if (userResponse.status === 401) navigate("/");
+      if (userResponse.status === 401 || userResponse.status === 403) {
+        navigate("/");
+        return;
+      }
       if (!userResponse.ok) {
         console.error("Failed to fetch user data:", await userResponse.json());
         return;
@@ -165,6 +168,14 @@ function ConnectionButtons({ choosenId, currentUserId, onDismiss }) {
         }
       );
 
+      if (
+        incomeUserResponse.status === 401 ||
+        incomeUserResponse.status === 403
+      ) {
+        navigate("/");
+        return;
+      }
+
       if (!incomeUserResponse.ok) {
         console.error(
           "Failed to fetch target user data:",
@@ -191,7 +202,10 @@ function ConnectionButtons({ choosenId, currentUserId, onDismiss }) {
           body: JSON.stringify(currentIncomeRequests), // Send updated array
         }
       );
-
+      if (incomeResponse.status === 401 || incomeResponse.status === 403) {
+        navigate("/");
+        return;
+      }
       if (incomeResponse.ok) {
         console.log(
           `Successfully added your ID to ${choosenId}'s incomeRequests.`

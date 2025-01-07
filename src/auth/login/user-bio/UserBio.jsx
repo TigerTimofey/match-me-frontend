@@ -200,8 +200,19 @@ const UserBio = ({ token }) => {
                 variant="outlined"
                 fullWidth
                 value={formData.age}
-                onChange={handleInputChange}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (/^\d{0,2}$/.test(value)) {
+                    handleInputChange({
+                      target: {
+                        name: "age",
+                        value: value === "" ? "" : Number(value),
+                      },
+                    });
+                  }
+                }}
               />
+
               <TextField
                 select
                 name="gender"

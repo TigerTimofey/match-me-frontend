@@ -129,7 +129,7 @@ const RegisterPage = () => {
             component="h1"
             sx={{
               textAlign: "center",
-              color: "#1A73E8",
+              color: "rgb(44,44,44)",
               marginBottom: 3,
               fontWeight: 600,
             }}
@@ -162,7 +162,16 @@ const RegisterPage = () => {
           />
           <Button
             variant="contained"
-            sx={{ textAlign: "center", marginTop: "20px" }}
+            color="primary"
+            size="small"
+            sx={{
+              mt: 2,
+              backgroundColor: "rgb(44,44,44)",
+              color: "#f4f3f3",
+              fontWeight: 600,
+              fontSize: "1.2rem",
+              fontFamily: "Poppins",
+            }}
             fullWidth
             onClick={handleRegister}
           >

@@ -108,7 +108,7 @@ function DashboardMain({ userData, currentUserId }) {
           },
         }
       );
-      if (userResponse.status === 401) {
+      if (userResponse.status === 401 || userResponse.status === 403) {
         navigate("/");
         return;
       }
@@ -162,7 +162,7 @@ function DashboardMain({ userData, currentUserId }) {
     const token = localStorage.getItem("jwt");
 
     const response = await fetch(
-      `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}/dismissed`,
+      `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}`,
       {
         method: "PATCH",
         headers: {
@@ -218,7 +218,10 @@ function DashboardMain({ userData, currentUserId }) {
         body: JSON.stringify(updatedDismissed),
       }
     );
-
+    if (dismissedResponse.status === 401 || dismissedResponse.status === 403) {
+      navigate("/");
+      return;
+    }
     if (!dismissedResponse.ok) {
       console.error(
         "Failed to update dismissed users:",
@@ -469,7 +472,7 @@ function DashboardMain({ userData, currentUserId }) {
       );
 
       if (response.ok) {
-        if (response.status === 401) {
+        if (response.status === 401 || response.status === 403) {
           navigate("/me");
         }
         const bioData = await response.json();

@@ -1,8 +1,8 @@
 import {
-    Box,
-    ToggleButton,
-    ToggleButtonGroup,
-    Typography,
+  Box,
+  ToggleButton,
+  ToggleButtonGroup,
+  Typography,
 } from "@mui/material";
 import React from "react";
 

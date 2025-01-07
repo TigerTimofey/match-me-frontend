@@ -1,37 +1,24 @@
 import TelegramIcon from "@mui/icons-material/Telegram";
 import {
-    Avatar,
-    Badge,
-    Box,
-    Button,
-    Card,
-    Chip,
-    Divider,
-    Modal,
-    styled,
-    Typography,
+  Avatar,
+  Badge,
+  Box,
+  Button,
+  Card,
+  Chip,
+  Divider,
+  Modal,
+  styled,
+  Typography,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
-import { Client } from '@stomp/stompjs';
+import { Client } from "@stomp/stompjs";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import SockJS from 'sockjs-client';
+import SockJS from "sockjs-client";
 import { languages } from "../../local-variables/languages";
 import { handleImageDisplay } from "../../utils/handleImageDisplay";
 import ChatModal from "./components/chat/ChatModal";
-
-const StyledBadge = styled(Badge)(({ theme }) => ({
-  "& .MuiBadge-badge": {
-    backgroundColor: "rgb(44,44,44)",
-    color: "#f0efef",
-    fontWeight: "bold",
-    textAlign: "center",
-    transform: "translateX(40px)",
-    [theme.breakpoints.down("sm")]: {
-      display: "none",
-    },
-  },
-}));
 
 function ConnectionsMain({ currentUserId }) {
   const navigate = useNavigate();
@@ -160,39 +147,41 @@ function ConnectionsMain({ currentUserId }) {
   }, [currentUserId]);
 
   useEffect(() => {
-    const sockjs = new SockJS(`${process.env.REACT_APP_SERVER_URL}/ws?userId=${currentUserId}`);
-    
+    const sockjs = new SockJS(
+      `${process.env.REACT_APP_SERVER_URL}/ws?userId=${currentUserId}`
+    );
+
     const stompClient = new Client({
-        webSocketFactory: () => sockjs,
-        debug: function (str) {
-            console.log(str);
-        },
-        reconnectDelay: 5000,
-        heartbeatIncoming: 4000,
-        heartbeatOutgoing: 4000
+      webSocketFactory: () => sockjs,
+      debug: function (str) {
+        console.log(str);
+      },
+      reconnectDelay: 5000,
+      heartbeatIncoming: 4000,
+      heartbeatOutgoing: 4000,
     });
 
     stompClient.onConnect = () => {
-        stompClient.subscribe('/topic/status', (statusMessage) => {
-            const status = JSON.parse(statusMessage.body);
-            setOnlineUsers(prev => {
-                const newSet = new Set(prev);
-                if (status.content === 'ONLINE') {
-                    newSet.add(status.sender);
-                } else {
-                    newSet.delete(status.sender);
-                }
-                return newSet;
-            });
+      stompClient.subscribe("/topic/status", (statusMessage) => {
+        const status = JSON.parse(statusMessage.body);
+        setOnlineUsers((prev) => {
+          const newSet = new Set(prev);
+          if (status.content === "ONLINE") {
+            newSet.add(status.sender);
+          } else {
+            newSet.delete(status.sender);
+          }
+          return newSet;
         });
+      });
     };
 
     stompClient.activate();
 
     return () => {
-        if (stompClient.connected) {
-            stompClient.deactivate();
-        }
+      if (stompClient.connected) {
+        stompClient.deactivate();
+      }
     };
   }, [currentUserId]);
 
@@ -219,10 +208,10 @@ function ConnectionsMain({ currentUserId }) {
   const handleOpenChatModal = (userId) => {
     const userBio = bios[userId];
     if (userBio) {
-        console.log('Opening chat with user:', userId, 'type:', typeof userId);
-        setSelectedUser(userBio);
-        setSelectedUserId(String(userId));
-        setOpenChatModal(true);
+      console.log("Opening chat with user:", userId, "type:", typeof userId);
+      setSelectedUser(userBio);
+      setSelectedUserId(String(userId));
+      setOpenChatModal(true);
     }
   };
 
@@ -273,20 +262,36 @@ function ConnectionsMain({ currentUserId }) {
                     userSelect: "none",
                     WebkitUserSelect: "none",
                     msUserSelect: "none",
+                    position: "relative",
                   }}
                 >
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      top: 10,
+                      left: 10,
+                      fontWeight: "bold",
+                      color: onlineUsers.has(connectionId.toString())
+                        ? "rgb(21, 121, 21)"
+                        : "rgb(125, 59, 59)",
+                      fontSize: "0.8rem",
+                    }}
+                  >
+                    {onlineUsers.has(connectionId.toString())
+                      ? "Online"
+                      : "Offline"}
+                  </Box>
+
                   <Box
                     display="flex"
                     alignItems="center"
                     justifyContent="center"
                     mt={2}
                   >
-                    <StyledBadge badgeContent={connectionBio.genres}>
-                      <Avatar
-                        src={handleImageDisplay(userImages[connectionId])}
-                        sx={{ width: 100, height: 100, boxShadow: 3 }}
-                      />
-                    </StyledBadge>
+                    <Avatar
+                      src={handleImageDisplay(userImages[connectionId])}
+                      sx={{ width: 100, height: 100, boxShadow: 3 }}
+                    />
                   </Box>
                   <Typography variant="h5" sx={{ fontWeight: 600, mt: 2 }}>
                     {connectionBio.name || "Unknown User"}
@@ -330,19 +335,6 @@ function ConnectionsMain({ currentUserId }) {
                       <TelegramIcon />
                     </Button>
                   </Box>
-                  {onlineUsers.has(connectionId.toString()) && (
-                    <Box 
-                      component="span"
-                      sx={{ 
-                        width: 10, 
-                        height: 10, 
-                        borderRadius: '50%', 
-                        bgcolor: 'success.main',
-                        display: 'inline-block',
-                        ml: 1
-                      }} 
-                    />
-                  )}
                 </Card>
               </Grid>
             );

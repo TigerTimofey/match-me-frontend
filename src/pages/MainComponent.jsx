@@ -18,7 +18,6 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
-
 } from "@mui/material";
 import Drawer from "./components/Drawer";
 import UserBioCard from "./user-data/UserBio";
@@ -90,7 +89,7 @@ function MainComponent() {
           );
 
           if (!response.ok) {
-            if (response.status === 401) {
+            if (response.status === 401 || response.status === 403) {
               setMessage({
                 type: "error",
                 text: "Session expired or unauthorized. Redirecting...",

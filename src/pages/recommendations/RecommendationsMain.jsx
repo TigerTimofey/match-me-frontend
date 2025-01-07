@@ -1,16 +1,15 @@
-import React, { useEffect, useState } from "react";
-import {
-  Card,
-  Typography,
-  Box,
-  Avatar,
-  Button,
-  Badge,
-  styled,
-} from "@mui/material";
-import Rating from "@mui/material/Rating";
 import StarIcon from "@mui/icons-material/Star";
+import {
+  Avatar,
+  Badge,
+  Box,
+  Card,
+  styled,
+  Typography
+} from "@mui/material";
 import Grid from "@mui/material/Grid2";
+import Rating from "@mui/material/Rating";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { handleImageDisplay } from "../../utils/handleImageDisplay";
 import AgeRangeSlider from "./components/AgeRangeSlider";
@@ -58,23 +57,21 @@ function RecommendationsMain({ currentUserId }) {
     }
 
     const matchScores = userDetailsArray
-      .filter(
-        (user) => user?.id !== currentUserId && user?.city === currentUser?.city
-      )
+      .filter((user) => user?.id !== currentUserId)
       .map((user) => {
         let score = 0;
 
-        if (user.city === currentUser.city) score++;
+        if (user.city === currentUser.city) score += 2;
 
         const languageMatches = user.languages.filter((lang) =>
           currentUser.languages.includes(lang)
         ).length;
-        score += languageMatches;
+        score += languageMatches * 1.5;
 
         const hobbyMatches = user.hobbies.filter((hobby) =>
           currentUser.hobbies.includes(hobby)
         ).length;
-        score += hobbyMatches;
+        score += hobbyMatches * 1.5;
 
         return { id: user.id, score };
       });
@@ -94,8 +91,9 @@ function RecommendationsMain({ currentUserId }) {
   const fetchRecommendations = async () => {
     try {
       const token = localStorage.getItem("jwt");
+      const genderParam = genres !== "all" ? `?gender=${genres}` : "";
       const response = await fetch(
-        `${process.env.REACT_APP_SERVER_URL}/api/users/recommendations`,
+        `${process.env.REACT_APP_SERVER_URL}/api/users/recommendations${genderParam}`,
         {
           method: "GET",
           headers: {
@@ -145,22 +143,41 @@ function RecommendationsMain({ currentUserId }) {
     const fetchAllData = async () => {
       setLoading(true);
 
-      const ids = await fetchRecommendations();
-      setRecommendations(ids);
+      try {
+        const currentUserResponse = await fetch(
+          `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}/bio`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("jwt")}`,
+            },
+          }
+        );
+        const currentUserDetails = await currentUserResponse.json();
 
-      const detailsPromises = ids.map((id) => fetchUserDetails(id));
-      const details = await Promise.all(detailsPromises);
+        const ids = await fetchRecommendations();
+        setRecommendations(ids);
+
+        const detailsPromises = ids.map((id) => fetchUserDetails(id));
+        const details = await Promise.all(detailsPromises);
 
       const validDetails = details.filter((user) => {
         return user?.age >= ageRange[0] && user?.age <= ageRange[1];
       });
 
-      setRecommendationsWithDetails(validDetails);
-      setLoading(false);
+
+        setRecommendationsWithDetails(validDetails);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setError("Failed to load recommendations");
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchAllData();
-  }, [navigate, ageRange]);
+  }, [navigate, ageRange, genres, currentUserId]);
 
   useEffect(() => {
     const fetchAndLogAges = async () => {
@@ -383,10 +400,9 @@ function RecommendationsMain({ currentUserId }) {
           {recommendationsWithImage
             .filter(
               (user) =>
-                //not show poor match , only >= 2 stars
-                (user.genres === genres || genres === "all") && user.score >= 2
+                user.score >= 1
             )
-            .slice(0, 10)
+            .slice(0, 20)
             .map((user, index) => (
               <Grid size={{ xs: 12, sm: 4, md: 4 }} key={`${user.id}-${index}`}>
                 <Card

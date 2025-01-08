@@ -22,6 +22,7 @@ const ChatModal = ({
   const [isConnected, setIsConnected] = useState(false);
   const [isUserOnline, setIsUserOnline] = useState(false);
   const stompClient = useRef(null);
+  const messagesEndRef = useRef(null);
 
   const formatTimestamp = (timestamp) => {
     const date = new Date(timestamp);
@@ -71,6 +72,39 @@ const ChatModal = ({
       requestUserStatus();
     }
   }, [selectedUserId]);
+
+  useEffect(() => {
+    if (open && selectedUserId) {
+      loadChatHistory();
+    }
+  }, [open, selectedUserId]);
+
+  const loadChatHistory = async () => {
+    try {
+      const token = localStorage.getItem('jwt');
+      const response = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/api/messages/${currentUserId}/${selectedUserId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+      
+      if (response.ok) {
+        const history = await response.json();
+        setMessages(history.map(msg => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp)
+        })));
+        console.log("Loaded messages:", history);
+      } else {
+        console.error('Failed to load chat history');
+      }
+    } catch (error) {
+      console.error('Error loading chat history:', error);
+    }
+  };
 
   const sendOfflineStatus = () => {
     if (stompClient.current && stompClient.current.connected) {
@@ -133,15 +167,35 @@ const ChatModal = ({
           `/user/${currentUserId}/queue/messages`,
           (message) => {
             const receivedMessage = JSON.parse(message.body);
-            setMessages((prev) => [
-              ...prev,
-              {
-                ...receivedMessage,
-                timestamp: receivedMessage.timestamp
-                  ? new Date(receivedMessage.timestamp)
-                  : new Date(),
-              },
-            ]);
+            console.log("Received message:", receivedMessage);
+            
+            if (receivedMessage.sender === selectedUserId || 
+               (receivedMessage.sender === currentUserId && 
+                !messages.some(msg => 
+                    msg.timestamp === receivedMessage.timestamp && 
+                    msg.content === receivedMessage.content
+                ))
+            ) {
+                setMessages((prev) => {
+                    const messageWithFlag = {
+                        ...receivedMessage,
+                        timestamp: new Date(receivedMessage.timestamp),
+                        sentByMe: receivedMessage.sender === currentUserId
+                    };
+
+                    const isDuplicate = prev.some(
+                        msg => 
+                            msg.timestamp.getTime() === messageWithFlag.timestamp.getTime() &&
+                            msg.sender === messageWithFlag.sender &&
+                            msg.content === messageWithFlag.content
+                    );
+                    
+                    if (!isDuplicate) {
+                        return [...prev, messageWithFlag];
+                    }
+                    return prev;
+                });
+            }
           }
         );
 
@@ -243,28 +297,38 @@ const ChatModal = ({
     if (!messageInput.trim() || !isConnected) return;
 
     const newMessage = {
-      content: messageInput,
-      sender: currentUserId,
-      recipient: selectedUserId,
-      type: "CHAT",
-      timestamp: new Date().toISOString(),
+        content: messageInput,
+        sender: currentUserId,
+        recipient: selectedUserId,
+        type: "CHAT",
+        timestamp: new Date().toISOString(),
+        sentByMe: true
     };
 
     try {
-      stompClient.current.publish({
-        destination: "/app/chat.sendMessage",
-        body: JSON.stringify(newMessage),
-      });
+        stompClient.current.publish({
+            destination: "/app/chat.sendMessage",
+            body: JSON.stringify(newMessage),
+        });
 
-      setMessages((prev) => [
-        ...prev,
-        { ...newMessage, timestamp: new Date() },
-      ]);
-      setMessageInput("");
+        setMessages((prev) => [...prev, {
+            ...newMessage,
+            timestamp: new Date(newMessage.timestamp)
+        }]);
+        
+        setMessageInput("");
     } catch (error) {
-      console.error("Error sending message:", error);
+        console.error("Error sending message:", error);
     }
   };
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   return (
     <Modal open={open} onClose={onClose}>
@@ -337,38 +401,26 @@ const ChatModal = ({
                     mb: 2,
                     display: "flex",
                     flexDirection: "column",
-                    alignItems:
-                      msg.sender === currentUserId ? "flex-end" : "flex-start",
+                    alignItems: msg.sentByMe ? "flex-end" : "flex-start",
                   }}
                 >
                   {/* Timestamp */}
-                  {msg.timestamp && (
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        color: "grey.600",
-                        textAlign: "center",
-                      }}
-                    >
-                      {formatTimestamp(msg.timestamp)}
-                    </Typography>
-                  )}
+                  <Typography variant="caption" sx={{ color: "grey.600" }}>
+                    {formatTimestamp(msg.timestamp)}
+                  </Typography>
                   {/* Message Content */}
                   <Typography
                     variant="body1"
                     sx={{
                       maxWidth: "70%",
-
                       p: 1,
                       borderRadius: 2,
-                      backgroundColor:
-                        msg.sender === currentUserId
-                          ? "rgb(44,44,44)"
-                          : "#c8c7c7",
-                      color:
-                        msg.sender === currentUserId
-                          ? "white"
-                          : "rgb(44,44,44)",
+                      backgroundColor: msg.sentByMe
+                        ? "rgb(44,44,44)"
+                        : "#c8c7c7",
+                      color: msg.sentByMe
+                        ? "white"
+                        : "rgb(44,44,44)",
                       textAlign: "center",
                     }}
                   >
@@ -376,6 +428,7 @@ const ChatModal = ({
                   </Typography>
                 </Box>
               ))}
+              <div ref={messagesEndRef} />
             </Box>
 
             {/* Ввод сообщения */}

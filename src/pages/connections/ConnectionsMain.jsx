@@ -32,8 +32,8 @@ function ConnectionsMain({ currentUserId }) {
   const [userImages, setUserImages] = useState({});
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState(new Set());
-  const [messages, setMessages] = useState([]);
   const [lastMessageTimestamps, setLastMessageTimestamps] = useState({});
+  const [newMessage, setNewMessage] = useState(true);
 
   const loadChatHistory = async (connectionId) => {
     try {
@@ -275,11 +275,13 @@ function ConnectionsMain({ currentUserId }) {
   };
 
   const handleCloseChatModal = () => {
+    setNewMessage(false);
     setOpenChatModal(false);
     setSelectedUser(null);
     setSelectedUserId(null);
     fetchConnections();
   };
+
   return (
     <Box sx={{ flexGrow: 1, padding: 2 }}>
       <Typography
@@ -386,20 +388,33 @@ function ConnectionsMain({ currentUserId }) {
                       >
                         Profile
                       </Button>
-                      <Button
-                        variant="outlined"
+                      <Badge
+                        badgeContent={"New"}
+                        showZero={newMessage}
                         sx={{
-                          color: "#f4f3f3",
-                          backgroundColor: "rgb(44,44,44)",
-                          fontWeight: 600,
-                          border: "none",
-                          fontFamily: "Poppins",
-                          "&:hover": { backgroundColor: "rgb(72, 71, 71)" },
+                          "& .MuiBadge-badge": {
+                            backgroundColor: "rgb(10, 146, 101)",
+                            color: "white",
+                            p: 1,
+                            fontSize: "0.75rem",
+                          },
                         }}
-                        onClick={() => handleOpenChatModal(connectionId)}
                       >
-                        <TelegramIcon />
-                      </Button>
+                        <Button
+                          variant="outlined"
+                          sx={{
+                            color: "#f4f3f3",
+                            backgroundColor: "rgb(44,44,44)",
+                            fontWeight: 600,
+                            border: "none",
+                            fontFamily: "Poppins",
+                            "&:hover": { backgroundColor: "rgb(72, 71, 71)" },
+                          }}
+                          onClick={() => handleOpenChatModal(connectionId)}
+                        >
+                          <TelegramIcon />
+                        </Button>{" "}
+                      </Badge>
                     </Box>
                   </Card>
                 </Grid>

@@ -103,7 +103,7 @@ function ConnectionsMain({ currentUserId }) {
         }
       );
 
-      if (response.status === 401) {
+      if (response.status === 401 && response.status === 403) {
         navigate("/");
         return;
       }
@@ -176,8 +176,8 @@ function ConnectionsMain({ currentUserId }) {
         }
       );
 
-      if (response.status === 401) {
-        navigate("/me");
+      if (response.status === 401 && response.status === 403) {
+        navigate("/");
         return;
       }
       if (response.ok) {

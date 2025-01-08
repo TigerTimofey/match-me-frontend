@@ -104,7 +104,7 @@ function RecommendationsMain({ currentUserId }) {
           },
         }
       );
-      if (response.status === 401) navigate("/");
+      if (response.status === 401 && response.status === 403) navigate("/");
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(
@@ -232,12 +232,7 @@ function RecommendationsMain({ currentUserId }) {
       fetchRecommendedUserData();
     }
   }, [matchedUserIds, dismissed]);
-  // console.log(
-  //   "recommendationsWithImage",
-  //   recommendationsWithImage.map(
-  //     (id, index) => recommendationsWithImage[index].id
-  //   )
-  // );
+
   const handleDismiss = (dismissedId) => {
     setRecommendationsWithImage((prevRecommendations) =>
       prevRecommendations.filter((user) => user.id !== dismissedId)
@@ -258,8 +253,8 @@ function RecommendationsMain({ currentUserId }) {
         }
       );
 
-      if (userResponse.status === 401) {
-        navigate("/me");
+      if (userResponse.status === 401 && userResponse.status === 403) {
+        navigate("/");
         return;
       }
 

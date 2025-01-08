@@ -165,7 +165,7 @@ function MainComponent() {
       );
 
       if (!response.ok) {
-        if (response.status === 401) {
+        if (response.status === 401 && response.status === 403) {
           setMessage({
             type: "error",
             text: "Session expired or unauthorized. Redirecting...",
@@ -285,8 +285,8 @@ function MainComponent() {
           }
         );
 
-        if (response.status === 401) {
-          navigate("/me");
+        if (response.status === 401 && response.status === 403) {
+          navigate("/");
         }
         if (!response.ok) {
           throw new Error("Failed to fetch bio data");

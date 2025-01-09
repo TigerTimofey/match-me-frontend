@@ -216,17 +216,28 @@ function ConnectionsMain({ currentUserId }) {
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
     });
-
     stompClient.onConnect = () => {
+      stompClient.subscribe("/topic/status", (statusMessage) => {
+        const status = JSON.parse(statusMessage.body);
+        setOnlineUsers((prev) => {
+          const newSet = new Set(prev);
+          if (status.content === "ONLINE") {
+            newSet.add(status.sender);
+          } else {
+            newSet.delete(status.sender);
+          }
+          return newSet;
+        });
+      });
+
       stompClient.subscribe(
         `/user/${currentUserId}/queue/messages`,
         (message) => {
           const receivedMessage = JSON.parse(message.body);
           const senderId = receivedMessage.sender;
-
           setUnreadMessages((prev) => {
             const updated = { ...prev, [senderId]: true };
-            localStorage.setItem("unreadMessages", JSON.stringify(updated)); // Persist to localStorage
+            localStorage.setItem("unreadMessages", JSON.stringify(updated));
             return updated;
           });
         }
@@ -282,6 +293,7 @@ function ConnectionsMain({ currentUserId }) {
     setSelectedUser(null);
     setSelectedUserId(null);
     fetchConnections();
+    setUnreadMessages(0);
   };
 
   return (

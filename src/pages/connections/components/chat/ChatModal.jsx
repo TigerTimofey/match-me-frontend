@@ -229,7 +229,7 @@ const ChatModal = ({ open, onClose, selectedUser, currentUserId, selectedUserId 
                     {isUserOnline ? (
                       isTyping ? (
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          <span>печатает</span>
+                          <span>typing</span>
                           <Box
                             sx={{
                               display: 'inline-flex',
@@ -400,7 +400,7 @@ const ChatModal = ({ open, onClose, selectedUser, currentUserId, selectedUserId 
                           animationDelay: '0.4s',
                         }}
                       />
-                    </Box>
+                    </Box> 
                   </Box>
                 </Box>
               )}

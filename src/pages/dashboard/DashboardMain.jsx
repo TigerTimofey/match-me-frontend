@@ -283,6 +283,13 @@ function DashboardMain({ userData, currentUserId }) {
           },
         }
       );
+      if (
+        connectionResponse.status === 401 &&
+        connectionResponse.status === 403
+      ) {
+        navigate("/");
+        return;
+      }
 
       if (!connectionResponse.ok) {
         const errorResponse = await connectionResponse.json();

@@ -33,7 +33,11 @@ function ConnectionsMain({ currentUserId }) {
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState(new Set());
   const [lastMessageTimestamps, setLastMessageTimestamps] = useState({});
-  const [newMessage, setNewMessage] = useState(true);
+  const [newMessage, setNewMessage] = useState(0);
+  const [unreadMessages, setUnreadMessages] = useState(() => {
+    const savedUnread = localStorage.getItem("unreadMessages");
+    return savedUnread ? JSON.parse(savedUnread) : {};
+  });
 
   const loadChatHistory = async (connectionId) => {
     try {
@@ -207,34 +211,28 @@ function ConnectionsMain({ currentUserId }) {
 
     const stompClient = new Client({
       webSocketFactory: () => sockjs,
-      debug: function (str) {
-        // console.log(str);
-      },
+      debug: () => {}, // Disable debug logs
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
     });
 
     stompClient.onConnect = () => {
-      stompClient.subscribe("/topic/status", (statusMessage) => {
-        const status = JSON.parse(statusMessage.body);
-        setOnlineUsers((prev) => {
-          const newSet = new Set(prev);
-          if (status.content === "ONLINE") {
-            newSet.add(status.sender);
-          } else {
-            newSet.delete(status.sender);
-          }
-          return newSet;
-        });
-      });
+      stompClient.subscribe(
+        `/user/${currentUserId}/queue/messages`,
+        (message) => {
+          const receivedMessage = JSON.parse(message.body);
+          const senderId = receivedMessage.sender;
 
-      stompClient.subscribe(`/topic/messages/${currentUserId}`, (message) => {
-        console.log("New message received:", message);
-
-        fetchConnections();
-      });
+          setUnreadMessages((prev) => {
+            const updated = { ...prev, [senderId]: true };
+            localStorage.setItem("unreadMessages", JSON.stringify(updated)); // Persist to localStorage
+            return updated;
+          });
+        }
+      );
     };
+
     stompClient.activate();
 
     return () => {
@@ -243,7 +241,6 @@ function ConnectionsMain({ currentUserId }) {
       }
     };
   }, [currentUserId]);
-
   const handleOpenModal = async (userId) => {
     const userBio = bios[userId];
     if (userBio) {
@@ -267,15 +264,20 @@ function ConnectionsMain({ currentUserId }) {
   const handleOpenChatModal = (userId) => {
     const userBio = bios[userId];
     if (userBio) {
-      console.log("Opening chat with user:", userId, "type:", typeof userId);
       setSelectedUser(userBio);
       setSelectedUserId(String(userId));
       setOpenChatModal(true);
+
+      setUnreadMessages((prev) => {
+        const updated = { ...prev };
+        delete updated[userId];
+        localStorage.setItem("unreadMessages", JSON.stringify(updated)); // Persist to localStorage
+        return updated;
+      });
     }
   };
 
   const handleCloseChatModal = () => {
-    setNewMessage(false);
     setOpenChatModal(false);
     setSelectedUser(null);
     setSelectedUserId(null);
@@ -389,8 +391,8 @@ function ConnectionsMain({ currentUserId }) {
                         Profile
                       </Button>
                       <Badge
-                        badgeContent={"New"}
-                        showZero={newMessage}
+                        // badgeContent={unreadMessages[connectionId] || 0}
+                        badgeContent={unreadMessages[connectionId] ? "New" : 0}
                         sx={{
                           "& .MuiBadge-badge": {
                             backgroundColor: "rgb(10, 146, 101)",
@@ -413,7 +415,7 @@ function ConnectionsMain({ currentUserId }) {
                           onClick={() => handleOpenChatModal(connectionId)}
                         >
                           <TelegramIcon />
-                        </Button>{" "}
+                        </Button>
                       </Badge>
                     </Box>
                   </Card>

@@ -139,7 +139,6 @@ const ChatModal = ({ open, onClose, selectedUser, currentUserId, selectedUserId 
       headers: { 'Authorization': `Bearer ${token}` }
     });
 
-    setMessages(prev => [...prev, { ...newMessage, timestamp: new Date(newMessage.timestamp) }]);
     setMessageInput("");
   };
 

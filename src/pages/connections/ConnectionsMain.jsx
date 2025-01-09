@@ -62,6 +62,7 @@ function ConnectionsMain({ currentUserId }) {
         const lastMessage = formattedHistory[formattedHistory.length - 1];
 
         if (lastMessage) {
+          fetchConnections();
           const lastMessageDate = lastMessage.timestamp;
           setLastMessageTimestamps((prev) => ({
             ...prev,
@@ -211,11 +212,12 @@ function ConnectionsMain({ currentUserId }) {
 
     const stompClient = new Client({
       webSocketFactory: () => sockjs,
-      debug: () => {}, // Disable debug logs
+      debug: () => {},
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
     });
+
     stompClient.onConnect = () => {
       stompClient.subscribe("/topic/status", (statusMessage) => {
         const status = JSON.parse(statusMessage.body);
@@ -234,12 +236,24 @@ function ConnectionsMain({ currentUserId }) {
         `/user/${currentUserId}/queue/messages`,
         (message) => {
           const receivedMessage = JSON.parse(message.body);
-          const senderId = receivedMessage.sender;
-          setUnreadMessages((prev) => {
-            const updated = { ...prev, [senderId]: true };
-            localStorage.setItem("unreadMessages", JSON.stringify(updated));
-            return updated;
-          });
+          console.log("receivedMessage", receivedMessage);
+
+          // Only handle "CHAT" type messages
+          if (receivedMessage.type === "CHAT") {
+            const senderId = receivedMessage.sender;
+
+            setUnreadMessages((prev) => {
+              const updated = { ...prev };
+
+              // Mark the message as unread if the user hasn't seen it
+              if (!updated[senderId]) {
+                updated[senderId] = true; // New unread message
+                localStorage.setItem("unreadMessages", JSON.stringify(updated));
+              }
+
+              return updated;
+            });
+          }
         }
       );
     };
@@ -252,6 +266,7 @@ function ConnectionsMain({ currentUserId }) {
       }
     };
   }, [currentUserId]);
+
   const handleOpenModal = async (userId) => {
     const userBio = bios[userId];
     if (userBio) {
@@ -279,10 +294,11 @@ function ConnectionsMain({ currentUserId }) {
       setSelectedUserId(String(userId));
       setOpenChatModal(true);
 
+      // Mark messages from this user as seen
       setUnreadMessages((prev) => {
         const updated = { ...prev };
-        delete updated[userId];
-        localStorage.setItem("unreadMessages", JSON.stringify(updated)); // Persist to localStorage
+        delete updated[userId]; // Remove from unread messages
+        localStorage.setItem("unreadMessages", JSON.stringify(updated));
         return updated;
       });
     }

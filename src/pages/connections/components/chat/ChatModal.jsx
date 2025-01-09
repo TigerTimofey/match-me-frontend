@@ -1,9 +1,22 @@
-import { Box, Button, Divider, Modal, TextField, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Divider,
+  Modal,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { Client } from "@stomp/stompjs";
 import React, { useEffect, useRef, useState } from "react";
 import SockJS from "sockjs-client";
 
-const ChatModal = ({ open, onClose, selectedUser, currentUserId, selectedUserId }) => {
+const ChatModal = ({
+  open,
+  onClose,
+  selectedUser,
+  currentUserId,
+  selectedUserId,
+}) => {
   const [messages, setMessages] = useState([]);
   const [messageInput, setMessageInput] = useState("");
   const [isConnected, setIsConnected] = useState(false);
@@ -15,7 +28,10 @@ const ChatModal = ({ open, onClose, selectedUser, currentUserId, selectedUserId 
 
   const formatTimestamp = (timestamp) => {
     const date = new Date(timestamp);
-    return `${date.toLocaleDateString()} - ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+    return `${date.toLocaleDateString()} - ${date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    })}`;
   };
 
   const handleMessageReceived = (message) => {
@@ -28,17 +44,20 @@ const ChatModal = ({ open, onClose, selectedUser, currentUserId, selectedUserId 
         }
         break;
       case "CHAT":
-        setMessages(prev => {
+        setMessages((prev) => {
           const messageWithFlag = {
             ...receivedMessage,
             timestamp: new Date(receivedMessage.timestamp),
-            sentByMe: String(receivedMessage.sender) === String(currentUserId)
+            sentByMe: String(receivedMessage.sender) === String(currentUserId),
           };
-          return prev.some(msg => 
-            msg.timestamp.getTime() === messageWithFlag.timestamp.getTime() &&
-            msg.sender === messageWithFlag.sender &&
-            msg.content === messageWithFlag.content
-          ) ? prev : [...prev, messageWithFlag];
+          return prev.some(
+            (msg) =>
+              msg.timestamp.getTime() === messageWithFlag.timestamp.getTime() &&
+              msg.sender === messageWithFlag.sender &&
+              msg.content === messageWithFlag.content
+          )
+            ? prev
+            : [...prev, messageWithFlag];
         });
         break;
       case "STATUS":
@@ -50,12 +69,14 @@ const ChatModal = ({ open, onClose, selectedUser, currentUserId, selectedUserId 
   };
 
   const connectWebSocket = () => {
-    const token = localStorage.getItem('jwt');
-    const sockjs = new SockJS(`${process.env.REACT_APP_SERVER_URL}/ws?token=${token}`);
-    
+    const token = localStorage.getItem("jwt");
+    const sockjs = new SockJS(
+      `${process.env.REACT_APP_SERVER_URL}/ws?token=${token}`
+    );
+
     stompClient.current = new Client({
       webSocketFactory: () => sockjs,
-      connectHeaders: { 'Authorization': `Bearer ${token}` },
+      connectHeaders: { Authorization: `Bearer ${token}` },
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
@@ -63,34 +84,44 @@ const ChatModal = ({ open, onClose, selectedUser, currentUserId, selectedUserId 
 
     stompClient.current.onConnect = () => {
       setIsConnected(true);
-      
+
       stompClient.current.subscribe(
         `/user/${currentUserId}/queue/messages`,
         handleMessageReceived,
-        { 'Authorization': `Bearer ${token}` }
+        { Authorization: `Bearer ${token}` }
       );
-      
+
       stompClient.current.subscribe(
         "/topic/status",
-        message => {
+        (message) => {
           const statusMessage = JSON.parse(message.body);
           if (String(statusMessage.sender) === String(selectedUserId)) {
             setIsUserOnline(statusMessage.content === "ONLINE");
           }
         },
-        { 'Authorization': `Bearer ${token}` }
+        { Authorization: `Bearer ${token}` }
       );
 
       // Отправляем начальные статусы
       [
         { destination: "/app/chat.join", message: { type: "JOIN" } },
-        { destination: "/app/user.online", message: { type: "STATUS", content: "ONLINE" } },
-        { destination: "/app/user.status.check", message: { type: "STATUS_CHECK" } }
+        {
+          destination: "/app/user.online",
+          message: { type: "STATUS", content: "ONLINE" },
+        },
+        {
+          destination: "/app/user.status.check",
+          message: { type: "STATUS_CHECK" },
+        },
       ].forEach(({ destination, message }) => {
         stompClient.current.publish({
           destination,
-          body: JSON.stringify({ ...message, sender: String(currentUserId), recipient: String(selectedUserId) }),
-          headers: { 'Authorization': `Bearer ${token}` }
+          body: JSON.stringify({
+            ...message,
+            sender: String(currentUserId),
+            recipient: String(selectedUserId),
+          }),
+          headers: { Authorization: `Bearer ${token}` },
         });
       });
     };
@@ -100,20 +131,20 @@ const ChatModal = ({ open, onClose, selectedUser, currentUserId, selectedUserId 
 
   const handleInputChange = (e) => {
     setMessageInput(e.target.value);
-    
+
     if (stompClient.current?.connected) {
       const now = Date.now();
       if (now - lastTypingTime > 1000) {
-        const token = localStorage.getItem('jwt');
+        const token = localStorage.getItem("jwt");
         stompClient.current.publish({
           destination: "/app/chat.typing",
           body: JSON.stringify({
             sender: String(currentUserId),
             recipient: String(selectedUserId),
             type: "TYPING",
-            content: "typing"
+            content: "typing",
           }),
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
         });
         setLastTypingTime(now);
       }
@@ -123,20 +154,20 @@ const ChatModal = ({ open, onClose, selectedUser, currentUserId, selectedUserId 
   const sendMessage = () => {
     if (!messageInput.trim() || !isConnected) return;
 
-    const token = localStorage.getItem('jwt');
+    const token = localStorage.getItem("jwt");
     const newMessage = {
       content: messageInput,
       sender: String(currentUserId),
       recipient: String(selectedUserId),
       type: "CHAT",
       timestamp: new Date().toISOString(),
-      sentByMe: true
+      sentByMe: true,
     };
 
     stompClient.current.publish({
       destination: "/app/chat.sendMessage",
       body: JSON.stringify(newMessage),
-      headers: { 'Authorization': `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` },
     });
 
     setMessageInput("");
@@ -147,13 +178,17 @@ const ChatModal = ({ open, onClose, selectedUser, currentUserId, selectedUserId 
       connectWebSocket();
       fetch(
         `${process.env.REACT_APP_SERVER_URL}/api/messages/${currentUserId}/${selectedUserId}`,
-        { headers: { 'Authorization': `Bearer ${localStorage.getItem('jwt')}` } }
+        { headers: { Authorization: `Bearer ${localStorage.getItem("jwt")}` } }
       )
-        .then(response => response.json())
-        .then(history => setMessages(history.map(msg => ({
-          ...msg,
-          timestamp: new Date(msg.timestamp)
-        }))));
+        .then((response) => response.json())
+        .then((history) =>
+          setMessages(
+            history.map((msg) => ({
+              ...msg,
+              timestamp: new Date(msg.timestamp),
+            }))
+          )
+        );
     }
     return () => {
       if (stompClient.current?.connected) {
@@ -162,8 +197,8 @@ const ChatModal = ({ open, onClose, selectedUser, currentUserId, selectedUserId 
           body: JSON.stringify({
             sender: String(currentUserId),
             type: "STATUS",
-            content: "OFFLINE"
-          })
+            content: "OFFLINE",
+          }),
         });
         stompClient.current.deactivate();
       }
@@ -207,7 +242,7 @@ const ChatModal = ({ open, onClose, selectedUser, currentUserId, selectedUserId 
               >
                 Chat with {selectedUser.name}
               </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <Box
                   sx={{
                     width: 12,
@@ -217,7 +252,7 @@ const ChatModal = ({ open, onClose, selectedUser, currentUserId, selectedUserId 
                     display: "inline-block",
                   }}
                 />
-                <Box sx={{ position: 'relative', minWidth: 80 }}>
+                <Box sx={{ position: "relative", minWidth: 80 }}>
                   <Typography
                     variant="body2"
                     sx={{
@@ -227,18 +262,24 @@ const ChatModal = ({ open, onClose, selectedUser, currentUserId, selectedUserId 
                   >
                     {isUserOnline ? (
                       isTyping ? (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                          }}
+                        >
                           <span>typing</span>
                           <Box
                             sx={{
-                              display: 'inline-flex',
+                              display: "inline-flex",
                               gap: 0.3,
-                              alignItems: 'center',
-                              animation: 'fadeInOut 1.5s infinite',
-                              '@keyframes fadeInOut': {
-                                '0%': { opacity: 0.3 },
-                                '50%': { opacity: 1 },
-                                '100%': { opacity: 0.3 },
+                              alignItems: "center",
+                              animation: "fadeInOut 1.5s infinite",
+                              "@keyframes fadeInOut": {
+                                "0%": { opacity: 0.3 },
+                                "50%": { opacity: 1 },
+                                "100%": { opacity: 0.3 },
                               },
                             }}
                           >
@@ -246,24 +287,24 @@ const ChatModal = ({ open, onClose, selectedUser, currentUserId, selectedUserId 
                               sx={{
                                 width: 4,
                                 height: 4,
-                                borderRadius: '50%',
-                                backgroundColor: 'success.main',
+                                borderRadius: "50%",
+                                backgroundColor: "success.main",
                               }}
                             />
                             <Box
                               sx={{
                                 width: 4,
                                 height: 4,
-                                borderRadius: '50%',
-                                backgroundColor: 'success.main',
+                                borderRadius: "50%",
+                                backgroundColor: "success.main",
                               }}
                             />
                             <Box
                               sx={{
                                 width: 4,
                                 height: 4,
-                                borderRadius: '50%',
-                                backgroundColor: 'success.main',
+                                borderRadius: "50%",
+                                backgroundColor: "success.main",
                               }}
                             />
                           </Box>
@@ -319,9 +360,7 @@ const ChatModal = ({ open, onClose, selectedUser, currentUserId, selectedUserId 
                       backgroundColor: msg.sentByMe
                         ? "rgb(44,44,44)"
                         : "#c8c7c7",
-                      color: msg.sentByMe
-                        ? "white"
-                        : "rgb(44,44,44)",
+                      color: msg.sentByMe ? "white" : "rgb(44,44,44)",
                       textAlign: "center",
                     }}
                   >
@@ -332,50 +371,50 @@ const ChatModal = ({ open, onClose, selectedUser, currentUserId, selectedUserId 
               {isTyping && (
                 <Box
                   sx={{
-                    display: 'flex',
-                    alignItems: 'center',
+                    display: "flex",
+                    alignItems: "center",
                     gap: 1,
                     mb: 2,
                   }}
                 >
                   <Box
                     sx={{
-                      display: 'flex',
-                      alignItems: 'center',
+                      display: "flex",
+                      alignItems: "center",
                       gap: 0.5,
-                      backgroundColor: '#e0e0e0',
-                      padding: '8px 16px',
-                      borderRadius: '16px',
-                      maxWidth: '100px',
+                      backgroundColor: "#e0e0e0",
+                      padding: "8px 16px",
+                      borderRadius: "16px",
+                      maxWidth: "100px",
                     }}
                   >
                     <Box
                       sx={{
-                        display: 'flex',
+                        display: "flex",
                         gap: 0.5,
-                        alignItems: 'center',
+                        alignItems: "center",
                       }}
                     >
                       <Box
                         sx={{
                           width: 6,
                           height: 6,
-                          borderRadius: '50%',
-                          backgroundColor: 'grey.600',
-                          animation: 'bounce 1s infinite',
-                          '@keyframes bounce': {
-                            '0%, 100%': {
-                              transform: 'translateY(0)',
+                          borderRadius: "50%",
+                          backgroundColor: "grey.600",
+                          animation: "bounce 1s infinite",
+                          "@keyframes bounce": {
+                            "0%, 100%": {
+                              transform: "translateY(0)",
                             },
-                            '50%': {
-                              transform: 'translateY(-5px)',
+                            "50%": {
+                              transform: "translateY(-5px)",
                             },
                           },
-                          '&:nth-of-type(2)': {
-                            animationDelay: '0.2s',
+                          "&:nth-of-type(2)": {
+                            animationDelay: "0.2s",
                           },
-                          '&:nth-of-type(3)': {
-                            animationDelay: '0.4s',
+                          "&:nth-of-type(3)": {
+                            animationDelay: "0.4s",
                           },
                         }}
                       />
@@ -383,23 +422,23 @@ const ChatModal = ({ open, onClose, selectedUser, currentUserId, selectedUserId 
                         sx={{
                           width: 6,
                           height: 6,
-                          borderRadius: '50%',
-                          backgroundColor: 'grey.600',
-                          animation: 'bounce 1s infinite',
-                          animationDelay: '0.2s',
+                          borderRadius: "50%",
+                          backgroundColor: "grey.600",
+                          animation: "bounce 1s infinite",
+                          animationDelay: "0.2s",
                         }}
                       />
                       <Box
                         sx={{
                           width: 6,
                           height: 6,
-                          borderRadius: '50%',
-                          backgroundColor: 'grey.600',
-                          animation: 'bounce 1s infinite',
-                          animationDelay: '0.4s',
+                          borderRadius: "50%",
+                          backgroundColor: "grey.600",
+                          animation: "bounce 1s infinite",
+                          animationDelay: "0.4s",
                         }}
                       />
-                    </Box> 
+                    </Box>
                   </Box>
                 </Box>
               )}
@@ -413,9 +452,10 @@ const ChatModal = ({ open, onClose, selectedUser, currentUserId, selectedUserId 
                 value={messageInput}
                 onChange={handleInputChange}
                 placeholder="Type a message..."
-                onKeyPress={(e) => e.key === "Enter" && sendMessage()}
+                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
                 disabled={!isConnected}
               />
+
               <Button
                 onClick={sendMessage}
                 disabled={!isConnected}

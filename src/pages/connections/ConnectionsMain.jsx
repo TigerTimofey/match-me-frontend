@@ -32,6 +32,61 @@ function ConnectionsMain({ currentUserId }) {
   const [userImages, setUserImages] = useState({});
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState(new Set());
+  const [lastMessageTimestamps, setLastMessageTimestamps] = useState({});
+  const [newMessage, setNewMessage] = useState(true);
+
+  const loadChatHistory = async (connectionId) => {
+    try {
+      const token = localStorage.getItem("jwt");
+      const response = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/api/messages/${currentUserId}/${connectionId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const history = await response.json();
+
+        const formattedHistory = history.map((msg) => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp),
+        }));
+
+        const lastMessage = formattedHistory[formattedHistory.length - 1];
+
+        if (lastMessage) {
+          const lastMessageDate = lastMessage.timestamp;
+          setLastMessageTimestamps((prev) => ({
+            ...prev,
+            [connectionId]: lastMessageDate,
+          }));
+        }
+      } else {
+        console.error(
+          `Failed to load chat history for connection ${connectionId}`
+        );
+      }
+    } catch (error) {
+      console.error("Error loading chat history:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const loadHistoryForAllConnections = async () => {
+      if (connections.length > 0) {
+        for (const connectionId of connections) {
+          await loadChatHistory(connectionId);
+        }
+      }
+    };
+
+    loadHistoryForAllConnections();
+  }, [connections]);
 
   const fetchConnections = async () => {
     const token = localStorage.getItem("jwt");
@@ -48,8 +103,8 @@ function ConnectionsMain({ currentUserId }) {
         }
       );
 
-      if (response.status === 401) {
-        navigate("/me");
+      if (response.status === 401 && response.status === 403) {
+        navigate("/");
         return;
       }
 
@@ -62,7 +117,6 @@ function ConnectionsMain({ currentUserId }) {
       setConnections(connectionsData.connections);
       await fetchBios(connectionsData.connections, token);
 
-      // Fetch image for each connectionId
       const imagePromises = connectionsData.connections.map(
         async (connectionId) => {
           const image = await fetchUserImage(connectionId);
@@ -122,8 +176,8 @@ function ConnectionsMain({ currentUserId }) {
         }
       );
 
-      if (response.status === 401) {
-        navigate("/me");
+      if (response.status === 401 && response.status === 403) {
+        navigate("/");
         return;
       }
       if (response.ok) {
@@ -154,7 +208,7 @@ function ConnectionsMain({ currentUserId }) {
     const stompClient = new Client({
       webSocketFactory: () => sockjs,
       debug: function (str) {
-        console.log(str);
+        // console.log(str);
       },
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
@@ -174,8 +228,13 @@ function ConnectionsMain({ currentUserId }) {
           return newSet;
         });
       });
-    };
 
+      stompClient.subscribe(`/topic/messages/${currentUserId}`, (message) => {
+        console.log("New message received:", message);
+
+        fetchConnections();
+      });
+    };
     stompClient.activate();
 
     return () => {
@@ -190,7 +249,6 @@ function ConnectionsMain({ currentUserId }) {
     if (userBio) {
       setSelectedUser(userBio);
 
-      // Fetch the user image
       const userImage = await fetchUserImage(userId);
       setSelectedUser((prevUser) => ({
         ...prevUser,
@@ -204,6 +262,7 @@ function ConnectionsMain({ currentUserId }) {
   const handleCloseModal = () => {
     setOpenModal(false);
     setSelectedUser(null);
+    fetchConnections();
   };
   const handleOpenChatModal = (userId) => {
     const userBio = bios[userId];
@@ -216,10 +275,13 @@ function ConnectionsMain({ currentUserId }) {
   };
 
   const handleCloseChatModal = () => {
+    setNewMessage(false);
     setOpenChatModal(false);
     setSelectedUser(null);
     setSelectedUserId(null);
+    fetchConnections();
   };
+
   return (
     <Box sx={{ flexGrow: 1, padding: 2 }}>
       <Typography
@@ -243,106 +305,124 @@ function ConnectionsMain({ currentUserId }) {
         </Typography>
       ) : (
         <Grid container spacing={2} justifyContent="center">
-          {connections.map((connectionId, index) => {
-            const connectionBio = bios[connectionId];
-            if (!connectionBio) return null;
+          {connections
+            .sort((a, b) => {
+              const timestampA = lastMessageTimestamps[a];
+              const timestampB = lastMessageTimestamps[b];
+              return timestampB - timestampA;
+            })
+            .map((connectionId, index) => {
+              const connectionBio = bios[connectionId];
+              if (!connectionBio) return null;
 
-            return (
-              <Grid xs={12} sm={4} md={4} key={index}>
-                <Card
-                  sx={{
-                    padding: 5,
-                    boxShadow: 2,
-                    backgroundColor: "#f0efef",
-                    color: "rgb(44,44,44)",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    userSelect: "none",
-                    WebkitUserSelect: "none",
-                    msUserSelect: "none",
-                    position: "relative",
-                  }}
-                >
-                  <Box
+              return (
+                <Grid xs={12} sm={4} md={4} key={index}>
+                  <Card
                     sx={{
-                      position: "absolute",
-                      top: 10,
-                      left: 10,
-                      fontWeight: "bold",
-                      color: onlineUsers.has(connectionId.toString())
-                        ? "rgb(21, 121, 21)"
-                        : "rgb(125, 59, 59)",
-                      fontSize: "0.8rem",
-                    }}
-                  >
-                    {onlineUsers.has(connectionId.toString())
-                      ? "Online"
-                      : "Offline"}
-                  </Box>
-
-                  <Box
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                    mt={2}
-                  >
-                    <Avatar
-                      src={handleImageDisplay(userImages[connectionId])}
-                      sx={{ width: 100, height: 100, boxShadow: 3 }}
-                    />
-                  </Box>
-                  <Typography variant="h5" sx={{ fontWeight: 600, mt: 2 }}>
-                    {connectionBio.name || "Unknown User"}
-                  </Typography>
-                  <Typography sx={{ mt: 1 }}>
-                    Age: {connectionBio.age}
-                  </Typography>
-                  <Box
-                    sx={{
+                      padding: 5,
+                      boxShadow: 2,
+                      backgroundColor: "#f0efef",
+                      color: "rgb(44,44,44)",
                       display: "flex",
-                      mt: 3,
-                      gap: 1,
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      userSelect: "none",
+                      WebkitUserSelect: "none",
+                      msUserSelect: "none",
+                      position: "relative",
                     }}
                   >
-                    <Button
-                      variant="outlined"
+                    <Box
                       sx={{
-                        color: "#f4f3f3",
-                        backgroundColor: "rgb(44,44,44)",
-                        fontWeight: 600,
-                        border: "none",
-                        fontFamily: "Poppins",
-                        "&:hover": { backgroundColor: "rgb(72, 71, 71)" },
+                        position: "absolute",
+                        top: 10,
+                        left: 10,
+                        fontWeight: "bold",
+                        color: onlineUsers.has(connectionId.toString())
+                          ? "rgb(21, 121, 21)"
+                          : "rgb(125, 59, 59)",
+                        fontSize: "0.8rem",
                       }}
-                      onClick={() => handleOpenModal(connectionId)}
                     >
-                      Profile
-                    </Button>
-                    <Button
-                      variant="outlined"
+                      {onlineUsers.has(connectionId.toString())
+                        ? "Online"
+                        : "Offline"}
+                    </Box>
+
+                    <Box
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="center"
+                      mt={2}
+                    >
+                      <Avatar
+                        src={handleImageDisplay(userImages[connectionId])}
+                        sx={{ width: 100, height: 100, boxShadow: 3 }}
+                      />
+                    </Box>
+                    <Typography variant="h5" sx={{ fontWeight: 600, mt: 2 }}>
+                      {connectionBio.name || "Unknown User"}
+                    </Typography>
+                    <Typography sx={{ mt: 1 }}>
+                      Age: {connectionBio.age}
+                    </Typography>
+                    <Box
                       sx={{
-                        color: "#f4f3f3",
-                        backgroundColor: "rgb(44,44,44)",
-                        fontWeight: 600,
-                        border: "none",
-                        fontFamily: "Poppins",
-                        "&:hover": { backgroundColor: "rgb(72, 71, 71)" },
+                        display: "flex",
+                        mt: 3,
+                        gap: 1,
                       }}
-                      onClick={() => handleOpenChatModal(connectionId)}
                     >
-                      <TelegramIcon />
-                    </Button>
-                  </Box>
-                </Card>
-              </Grid>
-            );
-          })}
+                      <Button
+                        variant="outlined"
+                        sx={{
+                          color: "#f4f3f3",
+                          backgroundColor: "rgb(44,44,44)",
+                          fontWeight: 600,
+                          border: "none",
+                          fontFamily: "Poppins",
+                          "&:hover": { backgroundColor: "rgb(72, 71, 71)" },
+                        }}
+                        onClick={() => handleOpenModal(connectionId)}
+                      >
+                        Profile
+                      </Button>
+                      <Badge
+                        badgeContent={"New"}
+                        showZero={newMessage}
+                        sx={{
+                          "& .MuiBadge-badge": {
+                            backgroundColor: "rgb(10, 146, 101)",
+                            color: "white",
+                            p: 1,
+                            fontSize: "0.75rem",
+                          },
+                        }}
+                      >
+                        <Button
+                          variant="outlined"
+                          sx={{
+                            color: "#f4f3f3",
+                            backgroundColor: "rgb(44,44,44)",
+                            fontWeight: 600,
+                            border: "none",
+                            fontFamily: "Poppins",
+                            "&:hover": { backgroundColor: "rgb(72, 71, 71)" },
+                          }}
+                          onClick={() => handleOpenChatModal(connectionId)}
+                        >
+                          <TelegramIcon />
+                        </Button>{" "}
+                      </Badge>
+                    </Box>
+                  </Card>
+                </Grid>
+              );
+            })}
         </Grid>
       )}
 
-      {/* <ChatModal open={openModal} onClose={handleCloseModal} /> */}
       {/* Modal for Profile View */}
       <Modal
         open={openModal}
@@ -358,8 +438,8 @@ function ConnectionsMain({ currentUserId }) {
             position: "absolute",
             top: "50%",
             left: "50%",
-            transform: "translate(-50%, -50%)", // Center the modal
-            width: "80%", // Adjust modal width
+            transform: "translate(-50%, -50%)",
+            width: "80%",
             bgcolor: "#f0efef",
             boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
             borderRadius: "8px",

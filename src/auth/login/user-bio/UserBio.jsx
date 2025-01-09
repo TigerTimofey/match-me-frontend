@@ -53,8 +53,8 @@ const UserBio = ({ token }) => {
         );
 
         if (!response.ok) {
-          if (response.status === 401) {
-            navigate("/me");
+          if (response.status === 401 && response.status === 403) {
+            navigate("/");
           }
           const errorData = await response.json();
           setMessage({

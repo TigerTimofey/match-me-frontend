@@ -84,8 +84,8 @@ function DashboardMain({ userData, currentUserId }) {
           },
         }
       );
-      if (incomeResponse.status === 401) {
-        navigate("/me");
+      if (incomeResponse.status === 401 && incomeResponse.status === 403) {
+        navigate("/");
       }
       const data = await incomeResponse.json();
       setIncomeRequests(data.incomeRequests || []);
@@ -473,7 +473,7 @@ function DashboardMain({ userData, currentUserId }) {
 
       if (response.ok) {
         if (response.status === 401 || response.status === 403) {
-          navigate("/me");
+          navigate("/");
         }
         const bioData = await response.json();
         console.log(`Bio for ${userId}:`, bioData);

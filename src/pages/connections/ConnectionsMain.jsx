@@ -33,7 +33,8 @@ function ConnectionsMain({ currentUserId }) {
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState(new Set());
   const [lastMessageTimestamps, setLastMessageTimestamps] = useState({});
-  const [newMessage, setNewMessage] = useState(true);
+  const [newMessage, setNewMessage] = useState(0);
+  const [unreadMessages, setUnreadMessages] = useState({});
 
   const loadChatHistory = async (connectionId) => {
     try {
@@ -228,12 +229,26 @@ function ConnectionsMain({ currentUserId }) {
           return newSet;
         });
       });
+      stompClient.subscribe(
+        `/user/${currentUserId}/queue/messages`,
+        (message) => {
+          const receivedMessage = JSON.parse(message.body);
 
-      stompClient.subscribe(`/topic/messages/${currentUserId}`, (message) => {
-        console.log("New message received:", message);
+          console.log("CONNECT Received message:", receivedMessage);
 
-        fetchConnections();
-      });
+          setUnreadMessages((prev) => ({
+            ...prev,
+            [receivedMessage.sender]: (prev[receivedMessage.sender] || 0) + 1,
+          }));
+
+          setLastMessageTimestamps((prev) => ({
+            ...prev,
+            [receivedMessage.sender]: new Date(),
+          }));
+        }
+      );
+
+      fetchConnections();
     };
     stompClient.activate();
 
@@ -267,6 +282,11 @@ function ConnectionsMain({ currentUserId }) {
   const handleOpenChatModal = (userId) => {
     const userBio = bios[userId];
     if (userBio) {
+      setUnreadMessages((prev) => ({
+        ...prev,
+        [userId]: 0,
+      }));
+
       console.log("Opening chat with user:", userId, "type:", typeof userId);
       setSelectedUser(userBio);
       setSelectedUserId(String(userId));
@@ -275,7 +295,6 @@ function ConnectionsMain({ currentUserId }) {
   };
 
   const handleCloseChatModal = () => {
-    setNewMessage(false);
     setOpenChatModal(false);
     setSelectedUser(null);
     setSelectedUserId(null);
@@ -389,8 +408,7 @@ function ConnectionsMain({ currentUserId }) {
                         Profile
                       </Button>
                       <Badge
-                        badgeContent={"New"}
-                        showZero={newMessage}
+                        badgeContent={unreadMessages[connectionId] || 0}
                         sx={{
                           "& .MuiBadge-badge": {
                             backgroundColor: "rgb(10, 146, 101)",
@@ -413,7 +431,7 @@ function ConnectionsMain({ currentUserId }) {
                           onClick={() => handleOpenChatModal(connectionId)}
                         >
                           <TelegramIcon />
-                        </Button>{" "}
+                        </Button>
                       </Badge>
                     </Box>
                   </Card>

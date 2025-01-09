@@ -290,7 +290,13 @@ function RecommendationsMain({ currentUserId }) {
             },
           }
         );
-
+        if (
+          updatedConnectionResponse.status === 401 &&
+          updatedConnectionResponse.status === 403
+        ) {
+          navigate("/");
+          return;
+        }
         if (!updatedConnectionResponse.ok) {
           const errorUpdatedResponse = await updatedConnectionResponse.json();
           console.error(

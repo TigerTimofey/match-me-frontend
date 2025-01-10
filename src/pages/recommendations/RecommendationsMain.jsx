@@ -41,7 +41,7 @@ function RecommendationsMain({ currentUserId }) {
   const [error, setError] = useState(null);
   const [matchedUserIds, setMatchedUserIds] = useState([]);
   const [ageRange, setAgeRange] = useState([1, 99]);
-  const [genres, setgenres] = useState("all");
+  const [gender, setgender] = useState("all");
   const [dismissed, setDismissed] = useState([]);
   const [connections, setConnections] = useState([]);
 
@@ -237,7 +237,7 @@ function RecommendationsMain({ currentUserId }) {
           const bioData = bioResponse.ok ? await bioResponse.json() : null;
 
           if (userData && bioData) {
-            return { ...userData, id, score, genres: bioData.genres };
+            return { ...userData, id, score, gender: bioData.gender };
           }
 
           return null;
@@ -363,7 +363,7 @@ function RecommendationsMain({ currentUserId }) {
         </Box>
 
         <Box sx={{ width: 200 }}>
-          <GenderFilter value={genres} onChange={setgenres} />
+          <GenderFilter value={gender} onChange={setgender} />
         </Box>
       </Card>
 
@@ -385,7 +385,7 @@ function RecommendationsMain({ currentUserId }) {
             .filter(
               (user) =>
                 //not show poor match , only >= 2 stars
-                (user.genres === genres || genres === "all") && user.score >= 2
+                (user.gender === gender || gender === "all") && user.score >= 2
             )
             .slice(0, 10)
             .map((user, index) => (
@@ -409,8 +409,8 @@ function RecommendationsMain({ currentUserId }) {
                     justifyContent="center"
                     mt={2}
                   >
-                    {user.genres === "Male" || user.genres === "Female" ? (
-                      <StyledBadge badgeContent={user.genres}>
+                    {user.gender === "Male" || user.gender === "Female" ? (
+                      <StyledBadge badgeContent={user.gender}>
                         <Avatar
                           src={handleImageDisplay(user.image)}
                           sx={{ width: 100, height: 100, boxShadow: 3 }}

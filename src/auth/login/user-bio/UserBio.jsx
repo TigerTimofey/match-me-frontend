@@ -100,6 +100,120 @@ const UserBio = ({ token }) => {
     }
   };
 
+  const handleNext = async () => {
+    const token = localStorage.getItem("jwt");
+
+    if (!token) {
+      setMessage({
+        type: "danger",
+        text: "No authentication token found.",
+      });
+      return;
+    }
+
+    try {
+      // Fetch current user details
+      const userResponse = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/api/users/me`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!userResponse.ok) {
+        const errorData = await userResponse.json();
+        setMessage({
+          type: "danger",
+          text: errorData.message || "Failed to fetch user data.",
+        });
+        return;
+      }
+
+      const userData = await userResponse.json();
+      const currentUserId = userData.id; // Assuming userData contains an `id` field
+
+      // Prepare the user bio data dynamically
+      const userBioData = {};
+
+      if (formData.city) userBioData.city = formData.city;
+      if (formData.age) userBioData.age = formData.age;
+      if (formData.gender) userBioData.gender = formData.gender;
+      if (formData.languages) {
+        userBioData.languages = formData.languages
+          ? formData.languages.split(",").map((lang) => lang.trim())
+          : [];
+      }
+      if (formData.hobbies) {
+        userBioData.hobbies = formData.hobbies
+          ? formData.hobbies.split(",").map((hobby) => hobby.trim())
+          : [];
+      }
+      if (formData.aboutme) userBioData.aboutme = formData.aboutme;
+      if (formData.lookingFor) userBioData.lookingFor = formData.lookingFor;
+
+      // Prepare FormData object
+      const formDataToSend = new FormData();
+      formDataToSend.append("data", JSON.stringify(userBioData));
+
+      // Append the image only if it was provided (not null or undefined)
+      if (formData.image) {
+        formDataToSend.append("image", formData.image);
+      } else {
+        // If no image, append null (this will remove the image from the backend)
+        formDataToSend.append("image", null);
+      }
+
+      // Perform the PATCH request
+      const patchResponse = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formDataToSend,
+        }
+      );
+
+      if (!patchResponse.ok) {
+        const errorData = await patchResponse.json();
+        setMessage({
+          type: "danger",
+          text: errorData.message || "Failed to update user data.",
+        });
+        return;
+      }
+
+      setShowUserProfile(true); // Proceed to the next step after a successful PATCH request
+    } catch (error) {
+      console.error("Error:", error);
+      setMessage({
+        type: "danger",
+        text: "Something went wrong while updating user data.",
+      });
+    }
+  };
+
+  // Inside the JSX:
+  <Button
+    size="small"
+    sx={{
+      backgroundColor: "rgb(44,44,44)",
+      color: "#f4f3f3",
+      fontWeight: 600,
+      fontSize: "1rem",
+      fontFamily: "Poppins",
+    }}
+    fullWidth
+    onClick={handleNext}
+  >
+    Next
+  </Button>;
+
   return (
     <Box
       sx={{
@@ -297,7 +411,7 @@ const UserBio = ({ token }) => {
                     fontFamily: "Poppins",
                   }}
                   fullWidth
-                  onClick={() => setShowUserProfile(true)}
+                  onClick={handleNext}
                 >
                   Next
                 </Button>

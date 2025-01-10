@@ -16,7 +16,10 @@ import { locations } from "../../local-variables/locations";
 
 function UserBioCard({ userBioData, setUserBioData }) {
   const [open, setOpen] = React.useState(false);
-  const [bioData, setBioData] = React.useState(userBioData);
+  const [bioData, setBioData] = React.useState({
+    gender: userBioData.gender || "Prefer not to say",
+    ...userBioData,
+  });
   const [message, setMessage] = React.useState({
     type: "",
     text: "",
@@ -240,6 +243,7 @@ function UserBioCard({ userBioData, setUserBioData }) {
           <TextField
             select
             name="gender"
+            label="Gender"
             variant="outlined"
             fullWidth
             value={bioData.gender}
@@ -251,6 +255,7 @@ function UserBioCard({ userBioData, setUserBioData }) {
               },
             }}
           >
+            <option value=""></option>
             <option value="Male">Male</option>
             <option value="Female">Female</option>
             <option value="Prefer not to say">Prefer not to say</option>

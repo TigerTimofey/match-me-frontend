@@ -519,7 +519,7 @@ function ConnectionsMain({ currentUserId }) {
                 Gender
               </Typography>
               <Typography variant="body1" align="center">
-                {selectedUser.genres}
+                {selectedUser.gender}
               </Typography>
 
               <Typography

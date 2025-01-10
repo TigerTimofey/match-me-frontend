@@ -15,7 +15,7 @@ import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded";
 
 import { styled } from "@mui/material";
 
-function UserProfileCard({ userProfileData, currentUserId }) {
+function UserProfileCard({ userProfileData, currentUserId, setUserImage }) {
   const [open, setOpen] = React.useState(false);
   const [userBioData, setUserBioData] = React.useState(userProfileData);
   const [tokenProfile, setTokenProfile] = React.useState("");
@@ -139,6 +139,22 @@ function UserProfileCard({ userProfileData, currentUserId }) {
         handleClose();
         const updatedData = await response.json();
         setUserBioData(updatedData);
+        const getResponse = await fetch(
+          `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}`,
+          {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${tokenProfile}`,
+            },
+          }
+        );
+
+        if (getResponse.ok) {
+          const getData = await getResponse.json();
+          setUserImage(getData.image);
+        } else {
+          console.error("Failed to fetch updated profile:", getResponse.status);
+        }
       } else {
         const errorData = await response.json();
         console.error("Failed to update profile:", errorData);

@@ -29,25 +29,26 @@ function UserDetailsCard({ userData }) {
         User Details
       </Typography>
       <Divider sx={{ my: 1, width: "100%" }} />
-      <Typography sx={{ textAlign: "center" }}>
-        Email: {userData.username}
+      <Typography variant="h6" align="center" sx={{ fontWeight: 600, mt: 2 }}>
+        Email:
       </Typography>
-      <Typography sx={{ textAlign: "center" }}>
-        City: {userData.city}
+      <Typography variant="body1" align="center">
+        {userData.username}
       </Typography>
-      <Typography sx={{ textAlign: "center" }}>Age: {userData.age}</Typography>
-      <Avatar
-        src={handleImageDisplay(userData.image)}
-        sx={{
-          width: 56,
-          height: 56,
-          mt: 2,
-          boxShadow: 1,
-          userSelect: "none",
-          WebkitUserSelect: "none",
-          msUserSelect: "none",
-        }}
-      />
+      <Typography variant="h6" align="center" sx={{ fontWeight: 600, mt: 2 }}>
+        City:
+      </Typography>
+      <Typography variant="body1" align="center">
+        {userData.city}
+      </Typography>
+      <Typography variant="h6" align="center" sx={{ fontWeight: 600, mt: 2 }}>
+        Age:
+      </Typography>
+      <Typography variant="body1" align="center">
+        Age: {userData.age}
+      </Typography>
+
+      <Typography sx={{ textAlign: "center" }}></Typography>
     </Card>
   );
 }

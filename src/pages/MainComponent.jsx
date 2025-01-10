@@ -71,6 +71,14 @@ function MainComponent() {
   const [loading, setLoading] = useState(false);
   const [activeMenu, setActiveMenu] = useState("Dashboard");
   const [hasCompleteBio, setHasCompleteBio] = useState(false);
+  const [userImage, setUserImage] = useState("");
+
+  useEffect(() => {
+    if (userData?.image) {
+      setUserImage(userData.image);
+    }
+  }, [userData]);
+
   const token = localStorage.getItem("jwt");
   useEffect(() => {
     const token = localStorage.getItem("jwt");
@@ -354,7 +362,7 @@ function MainComponent() {
               variant="dot"
             >
               <Avatar
-                src={handleImageDisplay(userData?.image)}
+                src={handleImageDisplay(userImage)}
                 sx={{
                   width: 35,
                   height: 35,
@@ -512,6 +520,7 @@ function MainComponent() {
             <UserProfileCard
               currentUserId={userData.id}
               userProfileData={userProfileData}
+              setUserImage={setUserImage}
             />
           ) : modalContent === "Bio" && userBioData ? (
             <UserBioCard

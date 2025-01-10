@@ -8,8 +8,7 @@ import {
   Chip,
   Divider,
   Modal,
-  styled,
-  Typography,
+  Typography
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import { Client } from "@stomp/stompjs";
@@ -38,6 +37,7 @@ function ConnectionsMain({ currentUserId }) {
     const savedUnread = localStorage.getItem("unreadMessages");
     return savedUnread ? JSON.parse(savedUnread) : {};
   });
+  const [lastUpdate, setLastUpdate] = useState(Date.now());
 
   const loadChatHistory = async (connectionId) => {
     try {
@@ -62,12 +62,16 @@ function ConnectionsMain({ currentUserId }) {
         const lastMessage = formattedHistory[formattedHistory.length - 1];
 
         if (lastMessage) {
-          fetchConnections();
-          const lastMessageDate = lastMessage.timestamp;
-          setLastMessageTimestamps((prev) => ({
-            ...prev,
-            [connectionId]: lastMessageDate,
-          }));
+          const currentTime = Date.now();
+          if (currentTime - lastUpdate > 5000) {
+            const lastMessageDate = lastMessage.timestamp;
+            setLastMessageTimestamps((prev) => ({
+              ...prev,
+              [connectionId]: lastMessageDate,
+            }));
+            setLastUpdate(currentTime);
+            fetchConnections();
+          }
         }
       } else {
         console.error(

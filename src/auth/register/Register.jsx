@@ -33,16 +33,20 @@ const RegisterPage = ({ onBackToLogin }) => {
 
   const handleRegister = async () => {
     const { name, lastname, username, password } = formData;
+
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const isValidEmail = emailRegex.test(username);
+
     const errors = {
       name: !name,
       lastname: !lastname,
-      username: !username,
+      username: !username || !isValidEmail,
       password: !password,
     };
 
     setFormErrors(errors);
 
-    if (!name || !lastname || !username || !password) {
+    if (!name || !lastname || !username || !password || !isValidEmail) {
       setMessage({ type: "danger", text: "All fields are required." });
       return;
     }
@@ -184,10 +188,26 @@ const RegisterPage = ({ onBackToLogin }) => {
               variant="outlined"
               fullWidth
               value={formData.username}
-              onChange={handleInputChange}
+              onChange={(e) => {
+                handleInputChange(e);
+
+                const emailRegex =
+                  /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+                const isValidEmail = emailRegex.test(e.target.value);
+
+                setFormErrors((prev) => ({
+                  ...prev,
+                  username: !isValidEmail && e.target.value !== "",
+                }));
+              }}
               error={formErrors.username}
-              helperText={formErrors.username && "Email is required"}
+              helperText={
+                formErrors.username
+                  ? "Please enter a valid email address"
+                  : formErrors.username === false && formData.username === ""
+              }
             />
+
             <TextField
               name="password"
               label="Password"
@@ -210,7 +230,10 @@ const RegisterPage = ({ onBackToLogin }) => {
                 mt: 2,
               }}
               fullWidth
-              onClick={handleRegister}
+              onClick={() => {
+                handleRegister();
+                animateLogin();
+              }}
             >
               Sign Up
             </Button>

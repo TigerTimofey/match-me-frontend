@@ -232,7 +232,6 @@ const RegisterPage = ({ onBackToLogin }) => {
               fullWidth
               onClick={() => {
                 handleRegister();
-                animateLogin();
               }}
             >
               Sign Up

@@ -194,6 +194,58 @@ const UserProfile = ({ token }) => {
     }
   };
 
+  const handleBack = async () => {
+    const { lookingFor, aboutme, image } = formData;
+
+    const userBioData = {
+      lookingFor,
+      aboutme,
+      image,
+    };
+
+    const formDataToSend = new FormData();
+    formDataToSend.append("data", JSON.stringify(userBioData));
+    if (image) {
+      formDataToSend.append("image", image);
+    }
+
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/api/users/${userData.id}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formDataToSend,
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setMessage({
+          type: "danger",
+          text: errorData.message || "Failed to update user bio.",
+        });
+        return;
+      }
+
+      const updatedData = await response.json();
+      console.log(`updatedData for ${updatedData.username}`, updatedData);
+      setMessage({
+        type: "success",
+        text: "User bio updated successfully.",
+      });
+
+      setShowUserBio(true); // Show the UserBio component after patch
+    } catch (error) {
+      console.error("Error updating user bio:", error);
+      setMessage({
+        type: "danger",
+        text: "Something went wrong while updating user bio.",
+      });
+    }
+  };
   return (
     <Box
       sx={{
@@ -340,7 +392,10 @@ const UserProfile = ({ token }) => {
                     fontFamily: "Poppins",
                   }}
                   fullWidth
-                  onClick={() => setShowUserBio(true)}
+                  onClick={() => {
+                    setShowUserBio(true);
+                    handleBack();
+                  }}
                 >
                   Back
                 </Button>

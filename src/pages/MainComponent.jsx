@@ -268,7 +268,7 @@ function MainComponent() {
         break;
     }
   };
-
+  localStorage.setItem("currentUserId", userData?.id);
   useEffect(() => {
     const simulateBioFetch = async () => {
       setLoading(true);

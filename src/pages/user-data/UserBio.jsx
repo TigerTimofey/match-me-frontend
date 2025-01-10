@@ -39,7 +39,19 @@ function UserBioCard({ userBioData, setUserBioData }) {
   const handleSubmit = async () => {
     try {
       const token = localStorage.getItem("jwt");
-      const { currentUserId, ...restOfBioData } = bioData;
+      const currentUserId2 = localStorage.getItem("currentUserId");
+
+      if (!currentUserId2 || isNaN(Number(currentUserId2))) {
+        console.log("User ID is missing or invalid!");
+        setMessage({
+          type: "danger",
+          text: "Invalid user ID.",
+        });
+        return;
+      }
+
+      const currentUserId = Number(currentUserId2); // Ensure it's a number
+      const { currentUserId: userId, ...restOfBioData } = bioData;
 
       if (isNaN(Number(restOfBioData.age)) || restOfBioData.age === "") {
         setMessage({
@@ -60,6 +72,7 @@ function UserBioCard({ userBioData, setUserBioData }) {
       console.log("Data being sent to backend:", userBioData);
       setUserBioData(userBioData);
 
+      console.log("currentUserId2 BIO", currentUserId2);
       const response = await fetch(
         `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}`,
         {
@@ -86,10 +99,6 @@ function UserBioCard({ userBioData, setUserBioData }) {
       setOpen(false);
     } catch (error) {
       console.error("Error updating user bio:", error);
-      setMessage({
-        type: "danger",
-        text: "Something went wrong while updating user bio.",
-      });
     }
   };
 

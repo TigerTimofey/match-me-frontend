@@ -81,7 +81,39 @@ function RecommendationsMain({ currentUserId }) {
 
     return matchScores;
   };
+  const fetchUser = async () => {
+    const token = localStorage.getItem("jwt");
 
+    const userResponse = await fetch(
+      `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}/dismissed`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (userResponse.status === 401 && userResponse.status === 403) {
+      navigate("/");
+      return;
+    }
+
+    let userData = null;
+
+    if (userResponse.ok) {
+      // Read response only once
+      userData = await userResponse.json();
+      setRecommendationsWithImage(userData);
+
+      const currentDismissed = userData.dismissed || [];
+      setDismissed(currentDismissed);
+    } else {
+      const errorData = await userResponse.json(); // Read the error message only once
+      console.error("Failed to fetch user data:", errorData);
+    }
+  };
   useEffect(() => {
     if (recommendationsWithDetails.length > 0 && currentUserId) {
       console.log("Recommendations:", recommendationsWithDetails);
@@ -104,6 +136,7 @@ function RecommendationsMain({ currentUserId }) {
           },
         }
       );
+
       if (response.status === 401 && response.status === 403) navigate("/");
       if (!response.ok) {
         const errorData = await response.json();
@@ -238,41 +271,8 @@ function RecommendationsMain({ currentUserId }) {
       prevRecommendations.filter((user) => user.id !== dismissedId)
     );
   };
+
   useEffect(() => {
-    const fetchUser = async () => {
-      const token = localStorage.getItem("jwt");
-
-      const userResponse = await fetch(
-        `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}/dismissed`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (userResponse.status === 401 && userResponse.status === 403) {
-        navigate("/");
-        return;
-      }
-
-      let userData = null;
-
-      if (userResponse.ok) {
-        // Read response only once
-        userData = await userResponse.json();
-        setRecommendationsWithImage(userData);
-
-        const currentDismissed = userData.dismissed || [];
-        setDismissed(currentDismissed);
-      } else {
-        const errorData = await userResponse.json(); // Read the error message only once
-        console.error("Failed to fetch user data:", errorData);
-      }
-    };
-
     fetchUser();
   }, []);
 

@@ -277,7 +277,7 @@ function ConnectionButtons({ choosenId, currentUserId, onDismiss }) {
         }}
         onClick={handleDecline}
       >
-        Decline
+        Dismiss
       </Button>
       <Button
         variant="contained"

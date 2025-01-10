@@ -161,25 +161,39 @@ function DashboardMain({ userData, currentUserId }) {
   const handleRemove = async (userId) => {
     const token = localStorage.getItem("jwt");
 
-    const response = await fetch(
-      `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}`,
-      {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(dismissed.filter((id) => id !== userId)),
+    // Prepare the data to be sent in the form of FormData
+    const dismissedData = {
+      dismissed: dismissed.filter((id) => id !== userId),
+    };
+
+    const formDataToSend = new FormData();
+    formDataToSend.append("data", JSON.stringify(dismissedData));
+
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formDataToSend,
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error("Failed to update dismissed users:", error);
+        return;
       }
-    );
 
-    if (!response.ok) {
-      console.error("Failed to update dismissed users:", await response.json());
-      return;
+      // Update the dismissed state locally
+      setDismissed((prev) => prev.filter((id) => id !== userId));
+    } catch (error) {
+      console.error("Error in handleRemove:", error);
     }
-
-    setDismissed((prev) => prev.filter((id) => id !== userId));
   };
+
   const handleIncomeRequestRemove = async (userId) => {
     const token = localStorage.getItem("jwt");
 

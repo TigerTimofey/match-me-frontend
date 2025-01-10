@@ -8,7 +8,7 @@ import {
   Chip,
   Divider,
   Modal,
-  Typography
+  Typography,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import { Client } from "@stomp/stompjs";
@@ -254,7 +254,7 @@ function ConnectionsMain({ currentUserId }) {
                 updated[senderId] = true; // New unread message
                 localStorage.setItem("unreadMessages", JSON.stringify(updated));
               }
-
+              fetchConnections();
               return updated;
             });
           }
@@ -291,6 +291,7 @@ function ConnectionsMain({ currentUserId }) {
     setSelectedUser(null);
     fetchConnections();
   };
+
   const handleOpenChatModal = (userId) => {
     const userBio = bios[userId];
     if (userBio) {

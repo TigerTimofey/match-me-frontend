@@ -25,6 +25,14 @@ const ChatModal = ({
   const [lastTypingTime, setLastTypingTime] = useState(0);
   const stompClient = useRef(null);
   const messagesEndRef = useRef(null);
+  const [visibleMessageCount, setVisibleMessageCount] = useState(5);
+
+  const handleScroll = (e) => {
+    if (e.target.scrollTop === 0) {
+      setVisibleMessageCount((prevCount) => prevCount + 5);
+    }
+  };
+  const visibleMessages = messages.slice(-visibleMessageCount);
 
   const formatTimestamp = (timestamp) => {
     const date = new Date(timestamp);
@@ -211,6 +219,14 @@ const ChatModal = ({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  useEffect(() => {
+    if (open) {
+      setVisibleMessageCount(5);
+    } else {
+      setVisibleMessageCount(5);
+    }
+  }, [open]);
+
   return (
     <Modal open={open} onClose={onClose}>
       <Box
@@ -335,8 +351,11 @@ const ChatModal = ({
             </Typography>
 
             {/* Сообщения */}
-            <Box sx={{ height: 300, overflowY: "auto", mb: 2, p: 2 }}>
-              {messages.map((msg, index) => (
+            <Box
+              onScroll={handleScroll}
+              sx={{ height: 300, overflowY: "auto", mb: 2, p: 2 }}
+            >
+              {visibleMessages.map((msg, index) => (
                 <Box
                   key={index}
                   sx={{

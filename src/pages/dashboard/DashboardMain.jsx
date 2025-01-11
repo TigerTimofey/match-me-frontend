@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
 import {
   Typography,
   Box,
@@ -69,6 +71,71 @@ function DashboardMain({ userData, currentUserId }) {
   const [fadingCard, setFadingCard] = useState(null); // Track which card is fading
   const [bio, setBio] = useState({});
   const [open, setOpen] = useState(false);
+  const stompClientRef = useRef(null); // Ref to store the stomp client instance
+
+  useEffect(() => {
+    const sockjs = new SockJS(`${process.env.REACT_APP_SERVER_URL}/ws`);
+
+    const stompClient = new Client({
+      webSocketFactory: () => sockjs,
+      debug: (str) => console.log(str), // Optional debugging logs
+      reconnectDelay: 5000, // Reconnect after 5 seconds if connection fails
+      heartbeatIncoming: 4000, // Heartbeat every 4 seconds (incoming)
+      heartbeatOutgoing: 4000, // Heartbeat every 4 seconds (outgoing)
+    });
+
+    stompClient.onConnect = () => {
+      console.log("Connected to WebSocket");
+
+      // Подписка на общий канал /topic/messages
+      stompClient.subscribe("/topic/messages", (message) => {
+        const receivedMessage = JSON.parse(message.body);
+        console.log("Parsed message:", receivedMessage.content); // Логирование разобранного сообщения
+
+        // Проверка на "Accepted"
+        if (receivedMessage.content === "Accepted") {
+          console.log("Accepted message received:", receivedMessage.content);
+        } else {
+          console.log("Other message received:", receivedMessage.content);
+        }
+      });
+    };
+
+    stompClient.onStompError = (frame) => {
+      console.error("Broker reported error:", frame.headers["message"]);
+      console.error("Additional details:", frame.body);
+    };
+
+    stompClient.activate(); // Активируем WebSocket соединение
+    stompClientRef.current = stompClient; // Сохраняем ссылку на клиента
+
+    return () => {
+      if (stompClientRef.current?.connected) {
+        stompClientRef.current.deactivate();
+      }
+    };
+  }, []);
+
+  const sendAcceptBraMessage = () => {
+    if (stompClientRef.current?.connected) {
+      const message = {
+        sender: "Server",
+        recipient: "User", // Не важно для серверной логики
+        content: "ACCEPT BRA",
+        type: "TEXT",
+        timestamp: new Date().toISOString(),
+      };
+
+      stompClientRef.current.publish({
+        destination: "/app/chat.acceptBra",
+        body: JSON.stringify(message),
+      });
+
+      console.log("Message sent:", message);
+    } else {
+      console.error("Stomp client is not connected yet.");
+    }
+  };
 
   useEffect(() => {
     const fetchIncomeRequests = async () => {
@@ -282,6 +349,7 @@ function DashboardMain({ userData, currentUserId }) {
     setDismissed(updatedDismissed);
     setIncomeRequests((prev) => prev.filter((id) => id !== userId));
   };
+
   const handleAcceptRequest = async (userId) => {
     const token = localStorage.getItem("jwt");
 
@@ -776,6 +844,7 @@ function DashboardMain({ userData, currentUserId }) {
                           border: "none",
                         }}
                         onClick={() => {
+                          sendAcceptBraMessage();
                           setFadingCard({ userId, action: "accept" });
                           setTimeout(() => {
                             handleAcceptRequest(userId);

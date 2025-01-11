@@ -1,4 +1,7 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
+
 import {
   Card,
   Typography,
@@ -44,6 +47,222 @@ function RecommendationsMain({ currentUserId }) {
   const [gender, setgender] = useState("all");
   const [dismissed, setDismissed] = useState([]);
   const [connections, setConnections] = useState([]);
+  const stompClientRef = useRef(null);
+
+  const getConnections = async (currentUserId) => {
+    try {
+      const token = localStorage.getItem("jwt");
+      const updatedConnectionResponse = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}/connections`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (
+        updatedConnectionResponse.status === 401 &&
+        updatedConnectionResponse.status === 403
+      ) {
+        navigate("/");
+        return;
+      }
+      if (!updatedConnectionResponse.ok) {
+        const errorUpdatedResponse = await updatedConnectionResponse.json();
+        console.error(
+          "Failed to fetch updated connections:",
+          errorUpdatedResponse
+        );
+        return;
+      }
+
+      // Parse the response before updating state
+      const updatedConnectionData = await updatedConnectionResponse.json();
+      console.log(
+        "updatedConnectionData in recommendations",
+        updatedConnectionData
+      );
+
+      // Update the connections state
+      setConnections((prevConnections) => {
+        const newConnections = [
+          ...prevConnections,
+          ...updatedConnectionData.connections,
+        ];
+        return Array.from(new Set(newConnections));
+      });
+    } catch (error) {
+      console.error("Error fetching connections:", error);
+    }
+  };
+  const fetchRecommendedUserData = async () => {
+    try {
+      const token = localStorage.getItem("jwt");
+      const userDataPromises = matchedUserIds.map(async ({ id, score }) => {
+        const userResponse = await fetch(
+          `${process.env.REACT_APP_SERVER_URL}/api/users/${id}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        const userData = userResponse.ok ? await userResponse.json() : null;
+
+        const bioResponse = await fetch(
+          `${process.env.REACT_APP_SERVER_URL}/api/users/${id}/bio`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        const bioData = bioResponse.ok ? await bioResponse.json() : null;
+
+        if (userData && bioData) {
+          return { ...userData, id, score, gender: bioData.gender };
+        }
+
+        return null;
+      });
+
+      const recommendedUsers = await Promise.all(userDataPromises);
+      const validRecommendedUsers = recommendedUsers.filter(Boolean);
+
+      const nonConnectedUsers = validRecommendedUsers.filter(
+        (user) => !connections.includes(user.id)
+      );
+
+      const sortedUsers = nonConnectedUsers.sort((a, b) => b.score - a.score);
+      const filteredUsers = sortedUsers.filter(
+        (user) => !dismissed.includes(user.id)
+      );
+
+      setRecommendationsWithImage(filteredUsers);
+    } catch (error) {
+      console.error("Error fetching recommended user data:", error);
+    }
+  };
+  useEffect(() => {
+    const sockjs = new SockJS(`${process.env.REACT_APP_SERVER_URL}/ws`);
+
+    const stompClient = new Client({
+      webSocketFactory: () => sockjs,
+      debug: (str) => console.log(str),
+      reconnectDelay: 5000,
+      heartbeatIncoming: 4000,
+      heartbeatOutgoing: 4000,
+    });
+
+    stompClient.onConnect = () => {
+      console.log("Connected to WebSocket");
+
+      stompClient.subscribe("/topic/messages", (message) => {
+        const receivedMessage = JSON.parse(message.body);
+        console.log("RECOM Parsed message:", receivedMessage.content);
+
+        if (receivedMessage.content === "Accepted") {
+          console.log(
+            "RECOM Accepted message received:",
+            receivedMessage.content
+          );
+          refreshRecommendations();
+        } else {
+          console.log("RECOM Other message received:", receivedMessage.content);
+        }
+      });
+    };
+
+    stompClient.onStompError = (frame) => {
+      console.error("Broker reported error:", frame.headers["message"]);
+      console.error("Additional details:", frame.body);
+    };
+
+    stompClient.activate();
+    stompClientRef.current = stompClient;
+
+    return () => {
+      if (stompClientRef.current?.connected) {
+        stompClientRef.current.deactivate();
+      }
+    };
+  }, []);
+  // Function to refresh recommendations
+  const refreshRecommendations = async () => {
+    console.log("Refreshing recommendations...");
+
+    try {
+      // Fetch updated recommendations
+      const updatedRecommendations = await fetchRecommendations();
+
+      // Add a small timeout to wait for connections to update
+      setTimeout(async () => {
+        // Get user connections from the server
+        const token = localStorage.getItem("jwt"); // Get authorization token
+
+        const connectionsResponse = await fetch(
+          `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}/connections`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!connectionsResponse.ok) {
+          console.error(
+            "Failed to fetch connections:",
+            await connectionsResponse.json()
+          );
+          return;
+        }
+
+        const connectionsData = await connectionsResponse.json();
+        const currentConnections = connectionsData.connections || []; // List of connections
+        console.log("Raw Connections Response:", connectionsData); // Debugging raw response
+
+        // Ensure all connection IDs are numbers (or strings, depending on your data model)
+        const connectionIds = currentConnections.map((id) => Number(id)); // Ensure consistency (convert all to numbers)
+
+        console.log("Current Connections (after conversion):", connectionIds); // For debugging
+
+        // Fetch updated user details for recommendations
+        const updatedDetailsPromises = updatedRecommendations.map((id) =>
+          fetchUserDetails(id)
+        );
+        const updatedDetails = await Promise.all(updatedDetailsPromises);
+
+        // Filter by age range and exclude connections
+        const validDetails = updatedDetails.filter((user) => {
+          // Ensure both comparison values are numbers (or strings)
+          const userId = Number(user?.id); // Convert to number if necessary
+          const isInConnections = connectionIds.includes(userId); // Check if user ID is in connections
+
+          return (
+            user?.age >= ageRange[0] &&
+            user?.age <= ageRange[1] &&
+            !isInConnections // Exclude users that are already in connections
+          );
+        });
+
+        console.log("Filtered Recommendations: ", validDetails); // For debugging
+
+        // Update the state with filtered recommendations
+        setRecommendationsWithDetails(validDetails);
+        setRecommendationsWithImage(validDetails);
+      }, 1000); // Timeout for 1 second (you can adjust this time if needed)
+    } catch (err) {
+      console.error("Error refreshing recommendations:", err);
+    }
+  };
 
   const findMatches = (currentUserId, userDetailsArray) => {
     const currentUser = userDetailsArray.find(
@@ -208,59 +427,6 @@ function RecommendationsMain({ currentUserId }) {
   }, [matchedUserIds]);
 
   useEffect(() => {
-    const fetchRecommendedUserData = async () => {
-      try {
-        const token = localStorage.getItem("jwt");
-        const userDataPromises = matchedUserIds.map(async ({ id, score }) => {
-          const userResponse = await fetch(
-            `${process.env.REACT_APP_SERVER_URL}/api/users/${id}`,
-            {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-          const userData = userResponse.ok ? await userResponse.json() : null;
-
-          const bioResponse = await fetch(
-            `${process.env.REACT_APP_SERVER_URL}/api/users/${id}/bio`,
-            {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-          const bioData = bioResponse.ok ? await bioResponse.json() : null;
-
-          if (userData && bioData) {
-            return { ...userData, id, score, gender: bioData.gender };
-          }
-
-          return null;
-        });
-
-        const recommendedUsers = await Promise.all(userDataPromises);
-        const validRecommendedUsers = recommendedUsers.filter(Boolean);
-
-        const nonConnectedUsers = validRecommendedUsers.filter(
-          (user) => !connections.includes(user.id)
-        );
-
-        const sortedUsers = nonConnectedUsers.sort((a, b) => b.score - a.score);
-        const filteredUsers = sortedUsers.filter(
-          (user) => !dismissed.includes(user.id)
-        );
-
-        setRecommendationsWithImage(filteredUsers);
-      } catch (error) {
-        console.error("Error fetching recommended user data:", error);
-      }
-    };
-
     if (matchedUserIds.length > 0) {
       fetchRecommendedUserData();
     }
@@ -277,55 +443,6 @@ function RecommendationsMain({ currentUserId }) {
   }, []);
 
   useEffect(() => {
-    const getConnections = async (currentUserId) => {
-      try {
-        const token = localStorage.getItem("jwt");
-        const updatedConnectionResponse = await fetch(
-          `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}/connections`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        if (
-          updatedConnectionResponse.status === 401 &&
-          updatedConnectionResponse.status === 403
-        ) {
-          navigate("/");
-          return;
-        }
-        if (!updatedConnectionResponse.ok) {
-          const errorUpdatedResponse = await updatedConnectionResponse.json();
-          console.error(
-            "Failed to fetch updated connections:",
-            errorUpdatedResponse
-          );
-          return;
-        }
-
-        // Parse the response before updating state
-        const updatedConnectionData = await updatedConnectionResponse.json();
-        console.log(
-          "updatedConnectionData in recommendations",
-          updatedConnectionData
-        );
-
-        // Update the connections state
-        setConnections((prevConnections) => {
-          const newConnections = [
-            ...prevConnections,
-            ...updatedConnectionData.connections,
-          ];
-          return Array.from(new Set(newConnections));
-        });
-      } catch (error) {
-        console.error("Error fetching connections:", error);
-      }
-    };
-
     if (currentUserId) {
       getConnections(currentUserId);
     }

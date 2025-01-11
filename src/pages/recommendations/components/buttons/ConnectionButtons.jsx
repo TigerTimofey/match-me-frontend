@@ -1,10 +1,17 @@
-import { Box, Button } from "@mui/material";
+import { Box, Button, Chip, Divider, Modal, Typography } from "@mui/material";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { languages } from "../../../../local-variables/languages";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import FingerprintIcon from "@mui/icons-material/Fingerprint";
 
 function ConnectionButtons({ choosenId, currentUserId, onDismiss }) {
   const [dismissed, setDismissed] = useState([]);
   const [isPending, setIsPending] = useState(false);
+  const [openModal, setOpenModal] = useState(false);
+  const [modalType, setModalType] = useState("bio"); // 'bio' or 'profile'
+
+  const [selectedUser, setSelectedUser] = useState(null);
 
   const navigate = useNavigate();
 
@@ -261,8 +268,111 @@ function ConnectionButtons({ choosenId, currentUserId, onDismiss }) {
     checkPendingStatus();
   }, [choosenId, currentUserId]);
 
+  const handleGetProfileData = async () => {
+    handleProfile();
+    handleBio();
+  };
+  const handleProfileAndBio = async () => {
+    const token = localStorage.getItem("jwt");
+    try {
+      const profileResponse = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/api/users/${choosenId}/profile`,
+        { method: "GET", headers: { Authorization: `Bearer ${token}` } }
+      );
+      const bioResponse = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/api/users/${choosenId}/bio`,
+        { method: "GET", headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (!profileResponse.ok || !bioResponse.ok) {
+        console.error("Failed to fetch data", profileResponse, bioResponse);
+        return;
+      }
+
+      const profileData = await profileResponse.json();
+      const bioData = await bioResponse.json();
+
+      setSelectedUser({ ...profileData, ...bioData });
+      setModalType("bio");
+      setOpenModal(true);
+    } catch (error) {
+      console.error("Error fetching profile and bio:", error);
+    }
+  };
+  const handleProfile = async () => {
+    try {
+      const token = localStorage.getItem("jwt");
+
+      const profileResponse = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/api/users/${choosenId}/profile`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!profileResponse.ok) {
+        console.error("Failed to fetch profile:", await profileResponse.json());
+        return;
+      }
+
+      const profileData = await profileResponse.json();
+      const { aboutme, lookingFor } = profileData;
+
+      setSelectedUser({ aboutme, lookingFor });
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    }
+  };
+
+  const handleBio = async () => {
+    try {
+      const token = localStorage.getItem("jwt");
+
+      const bioResponse = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/api/users/${choosenId}/bio`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!bioResponse.ok) {
+        console.error("Failed to fetch bio:", await bioResponse.json());
+        return;
+      }
+
+      const bioData = await bioResponse.json();
+      const { name, lastname, age, genres, city, hobbies, languages } = bioData;
+
+      setSelectedUser({
+        name,
+        lastname,
+        age,
+        genres,
+        city,
+        hobbies,
+        languages,
+      });
+    } catch (error) {
+      console.error("Error fetching bio:", error);
+    }
+  };
+
   return (
-    <Box display="flex" justifyContent="space-between" width="100%" mt="auto">
+    <Box
+      display="flex"
+      justifyContent="space-between"
+      width="100%"
+      mt="auto"
+      gap={2}
+    >
       <Button
         variant="contained"
         color="primary"
@@ -277,7 +387,24 @@ function ConnectionButtons({ choosenId, currentUserId, onDismiss }) {
         }}
         onClick={handleDecline}
       >
-        Decline
+        Dismiss
+      </Button>
+
+      <Button
+        variant="contained"
+        color="primary"
+        size="small"
+        sx={{
+          backgroundColor: "rgb(44,44,44)",
+          color: "#f4f3f3",
+          fontWeight: 600,
+          fontSize: "0.7rem",
+          fontFamily: "Poppins",
+          width: "45%",
+        }}
+        onClick={handleProfileAndBio}
+      >
+        Bio
       </Button>
       <Button
         variant="contained"
@@ -296,6 +423,134 @@ function ConnectionButtons({ choosenId, currentUserId, onDismiss }) {
       >
         {isPending ? "Pending" : "Connect"}
       </Button>
+
+      <Modal
+        open={openModal}
+        onClose={() => setOpenModal(false)}
+        sx={{
+          "& .MuiBackdrop-root": {
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+          },
+        }}
+      >
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: "80%",
+            bgcolor: "#f0efef",
+            boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.1)",
+            borderRadius: "8px",
+            p: 4,
+          }}
+        >
+          {selectedUser && (
+            <>
+              <Typography
+                variant="h4"
+                align="center"
+                sx={{ fontFamily: "Poppins", fontWeight: 600 }}
+              >
+                Biographical & Profile
+              </Typography>
+              <Divider sx={{ my: 2, borderColor: "black" }} />
+
+              <Typography
+                variant="h5"
+                align="center"
+                sx={{ fontWeight: 600, mt: 2 }}
+              >
+                {selectedUser.name} {selectedUser.lastname}
+              </Typography>
+
+              <Typography
+                variant="h6"
+                align="center"
+                sx={{ fontWeight: 600, mt: 2 }}
+              >
+                Age
+              </Typography>
+              <Typography variant="body1" align="center">
+                {selectedUser.age}
+              </Typography>
+
+              <Typography
+                variant="h6"
+                align="center"
+                sx={{ fontWeight: 600, mt: 2 }}
+              >
+                Gender
+              </Typography>
+              <Typography variant="body1" align="center">
+                {selectedUser.gender}
+              </Typography>
+
+              <Typography
+                variant="h6"
+                align="center"
+                sx={{ fontWeight: 600, mt: 2 }}
+              >
+                City
+              </Typography>
+              <Typography variant="body1" align="center">
+                {selectedUser.city}
+              </Typography>
+
+              <Typography
+                variant="h6"
+                align="center"
+                sx={{ fontWeight: 600, mt: 2 }}
+              >
+                Hobbies
+              </Typography>
+              <Typography variant="body1" align="center">
+                {selectedUser.hobbies?.join(", ")}
+              </Typography>
+
+              <Typography
+                variant="h6"
+                align="center"
+                sx={{ fontWeight: 600, mt: 2 }}
+              >
+                Languages
+              </Typography>
+              <Box sx={{ textAlign: "center" }}>
+                {selectedUser.languages?.map((lang, index) => (
+                  <Chip
+                    key={index}
+                    label={languages[lang]}
+                    sx={{ m: 0.5, fontSize: "2rem" }}
+                  />
+                ))}
+                <Typography
+                  variant="h6"
+                  align="center"
+                  sx={{ fontWeight: 600, mt: 2 }}
+                >
+                  About Me
+                </Typography>
+                <Typography variant="body1" align="center">
+                  {selectedUser.aboutme}
+                </Typography>
+
+                <Typography
+                  variant="h6"
+                  align="center"
+                  sx={{ fontWeight: 600, mt: 2 }}
+                >
+                  Looking for
+                </Typography>
+                <Typography variant="body1" align="center">
+                  {selectedUser.lookingFor ||
+                    `Not added by ${selectedUser.name}`}
+                </Typography>
+              </Box>
+            </>
+          )}
+        </Box>
+      </Modal>
     </Box>
   );
 }

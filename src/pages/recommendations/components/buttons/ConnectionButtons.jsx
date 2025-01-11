@@ -404,7 +404,7 @@ function ConnectionButtons({ choosenId, currentUserId, onDismiss }) {
         }}
         onClick={handleProfileAndBio}
       >
-        Bio
+        Profile
       </Button>
       <Button
         variant="contained"

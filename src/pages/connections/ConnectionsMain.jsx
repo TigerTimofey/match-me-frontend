@@ -171,6 +171,43 @@ function ConnectionsMain({ currentUserId }) {
     setLoading(false);
   };
 
+  const handleDisconnect = async (userId) => {
+    console.log(`${currentUserId} want to disconnect with ${userId}`);
+
+    // Ensure the token is available and valid
+    const token = localStorage.getItem("jwt");
+    if (!token) {
+      console.error("No token found. Please log in again.");
+      return;
+    }
+
+    const updatedConnections = connections.filter((id) => id !== userId);
+
+    try {
+      // Send the updated connections to the backend
+      const response = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}/connections`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(updatedConnections),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to update connections: ${response.statusText}`);
+      }
+
+      // Update the UI state with the updated connections
+      setConnections(updatedConnections);
+    } catch (error) {
+      console.error("Error disconnecting user:", error);
+    }
+  };
+
   const fetchUserImage = async (connectionId) => {
     try {
       const token = localStorage.getItem("jwt");
@@ -409,6 +446,20 @@ function ConnectionsMain({ currentUserId }) {
                         gap: 1,
                       }}
                     >
+                      <Button
+                        variant="outlined"
+                        sx={{
+                          color: "#f4f3f3",
+                          backgroundColor: "rgb(44,44,44)",
+                          fontWeight: 600,
+                          border: "none",
+                          fontFamily: "Poppins",
+                          "&:hover": { backgroundColor: "rgb(72, 71, 71)" },
+                        }}
+                        onClick={() => handleDisconnect(connectionId)}
+                      >
+                        Disconnect
+                      </Button>
                       <Button
                         variant="outlined"
                         sx={{

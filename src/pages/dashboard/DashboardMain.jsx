@@ -589,7 +589,7 @@ function DashboardMain({ userData, currentUserId }) {
       >
         Dashboard
       </Typography>
-      <UserDetailsCard userData={userData} />
+      {/* <UserDetailsCard userData={userData} /> */}
 
       {incomeRequests.length > 0 && (
         <Card

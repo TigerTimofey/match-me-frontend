@@ -1,4 +1,5 @@
 import TelegramIcon from "@mui/icons-material/Telegram";
+import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
 import {
   Avatar,
   Badge,
@@ -22,6 +23,7 @@ import ChatModal from "./components/chat/ChatModal";
 function ConnectionsMain({ currentUserId }) {
   const navigate = useNavigate();
   const [connections, setConnections] = useState([]);
+  const [dismissed, setDismissed] = useState([]);
   const [bios, setBios] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -171,9 +173,193 @@ function ConnectionsMain({ currentUserId }) {
     setLoading(false);
   };
 
+  const fetchDismissedData = async (userId) => {
+    const token = localStorage.getItem("jwt");
+
+    try {
+      const responseDismiss = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}/dismissed`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const currentDismissed = await responseDismiss.json();
+
+      // Ensure currentDismissed is an array
+      const dismissedArray = Array.isArray(currentDismissed)
+        ? currentDismissed
+        : [];
+
+      // Add the userId to the dismissed list if not already present
+      if (!dismissedArray.includes(userId)) {
+        dismissedArray.push(userId);
+      }
+
+      setDismissed(dismissedArray);
+      console.log(`${currentUserId} dismissed: `, dismissedArray);
+
+      // Prepare formData with the updated dismissed list
+      const formData = new FormData();
+      formData.append(
+        "data",
+        JSON.stringify({
+          dismissed: dismissedArray,
+        })
+      );
+
+      const response = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        }
+      );
+
+      if (response.ok) {
+        const updatedData = await response.json();
+        console.log("User dismissed updated successfully:", updatedData);
+      } else {
+        const errorData = await response.json();
+        console.error("Failed to update dismissed list:", errorData);
+      }
+    } catch (error) {
+      console.error("Error updating dismissed list:", error);
+    }
+  };
+  const removeFromOutcomeOther = async (userId) => {
+    try {
+      const token = localStorage.getItem("jwt");
+
+      // Fetch current user's outcomeRequests
+      const userResponse = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/api/users/${userId}/outcome-requests`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!userResponse.ok) {
+        console.error("Failed to fetch user data:", await userResponse.json());
+        return;
+      }
+
+      const userData = await userResponse.json();
+      let currentOutcomeRequests = userData.outcomeRequests || [];
+
+      // Remove currentUserId from outcomeRequests
+      currentOutcomeRequests = currentOutcomeRequests.filter(
+        (id) => id !== currentUserId
+      );
+
+      // Prepare data for the PATCH request
+      const formData = new FormData();
+      formData.append(
+        "data",
+        JSON.stringify({
+          outcomeRequests: currentOutcomeRequests,
+        })
+      );
+
+      // Send PATCH request to update outcomeRequests
+      const response = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/api/users/${userId}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        }
+      );
+
+      if (response.ok) {
+        const updatedData = await response.json();
+        console.log("Outcome requests updated successfully:", updatedData);
+      } else {
+        const errorData = await response.json();
+        console.error("Failed to update Outcome requests:", errorData);
+      }
+    } catch (error) {
+      console.error("Error updating connection requests:", error);
+    }
+
+    try {
+      const token = localStorage.getItem("jwt");
+
+      // Fetch current user's outcomeRequests
+      const userResponse = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}/outcome-requests`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!userResponse.ok) {
+        console.error("Failed to fetch user data:", await userResponse.json());
+        return;
+      }
+
+      const userData = await userResponse.json();
+      let currentOutcomeRequests = userData.outcomeRequests || [];
+
+      // Remove currentUserId from outcomeRequests
+      currentOutcomeRequests = currentOutcomeRequests.filter(
+        (id) => id !== userId
+      );
+
+      // Prepare data for the PATCH request
+      const formData = new FormData();
+      formData.append(
+        "data",
+        JSON.stringify({
+          outcomeRequests: currentOutcomeRequests,
+        })
+      );
+
+      // Send PATCH request to update outcomeRequests
+      const response = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/api/users/${currentUserId}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        }
+      );
+
+      if (response.ok) {
+        const updatedData = await response.json();
+        console.log("Outcome requests updated successfully:", updatedData);
+      } else {
+        const errorData = await response.json();
+        console.error("Failed to update Outcome requests:", errorData);
+      }
+    } catch (error) {
+      console.error("Error updating connection requests:", error);
+    }
+  };
+
   const handleDisconnect = async (userId) => {
     console.log(`${currentUserId} want to disconnect with ${userId}`);
-
+    fetchDismissedData(userId);
+    removeFromOutcomeOther(userId);
     // Ensure the token is available and valid
     const token = localStorage.getItem("jwt");
     if (!token) {
@@ -201,8 +387,54 @@ function ConnectionsMain({ currentUserId }) {
         throw new Error(`Failed to update connections: ${response.statusText}`);
       }
 
-      // Update the UI state with the updated connections
-      setConnections(updatedConnections);
+      const userConnectionsResponse = await fetch(
+        `${process.env.REACT_APP_SERVER_URL}/api/users/${userId}/connections`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!userConnectionsResponse.ok) {
+        throw new Error(
+          `Failed to fetch connections for userId: ${userConnectionsResponse.statusText}`
+        );
+      }
+
+      const userConnections = await userConnectionsResponse.json();
+      console.log(userConnections.connections);
+
+      const updatedConnectionsForOther = userConnections.connections.filter(
+        (id) => id !== currentUserId
+      );
+
+      try {
+        // Send the updated connections to the backend
+        const response = await fetch(
+          `${process.env.REACT_APP_SERVER_URL}/api/users/${userId}/connections`,
+          {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(updatedConnectionsForOther),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `Failed to update connections: ${response.statusText}`
+          );
+        }
+
+        // Update the UI state with the updated connections
+        setConnections(updatedConnections);
+      } catch (error) {
+        console.error("Error disconnecting user:", error);
+      }
     } catch (error) {
       console.error("Error disconnecting user:", error);
     }
@@ -391,7 +623,7 @@ function ConnectionsMain({ currentUserId }) {
                 <Grid xs={12} sm={4} md={4} key={index}>
                   <Card
                     sx={{
-                      padding: 5,
+                      padding: 1,
                       boxShadow: 2,
                       backgroundColor: "#f0efef",
                       color: "rgb(44,44,44)",
@@ -450,15 +682,15 @@ function ConnectionsMain({ currentUserId }) {
                         variant="outlined"
                         sx={{
                           color: "#f4f3f3",
-                          backgroundColor: "rgb(44,44,44)",
+                          backgroundColor: "rgb(62, 47, 47)",
                           fontWeight: 600,
                           border: "none",
                           fontFamily: "Poppins",
-                          "&:hover": { backgroundColor: "rgb(72, 71, 71)" },
+                          "&:hover": { backgroundColor: "rgb(62, 47, 47)" },
                         }}
                         onClick={() => handleDisconnect(connectionId)}
                       >
-                        Disconnect
+                        <RemoveCircleOutlineIcon />
                       </Button>
                       <Button
                         variant="outlined"

@@ -48,6 +48,123 @@ function RecommendationsMain({ currentUserId }) {
   const [dismissed, setDismissed] = useState([]);
   const [connections, setConnections] = useState([]);
   const stompClientRef = useRef(null);
+  const [friendFriendMatches, setFriendFriendMatches] = useState([]);
+
+  const fetchConnectionsForRecommendations = async () => {
+    const token = localStorage.getItem("jwt");
+
+    // Function to fetch connections for a given user
+    const fetchConnectionsForUser = async (userId) => {
+      try {
+        const response = await fetch(
+          `${process.env.REACT_APP_SERVER_URL}/api/users/${userId}/connections`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error(
+            `Failed to fetch connections for user ${userId}:`,
+            errorData
+          );
+          return [];
+        }
+
+        const connectionsData = await response.json();
+        return connectionsData.connections;
+      } catch (error) {
+        console.error(`Error fetching connections for user ${userId}:`, error);
+        return [];
+      }
+    };
+
+    try {
+      const logData = {}; // Object to store all the logs in one place
+      logData[`currentUserId`] = currentUserId;
+      logData[`currentUserRecommend`] = recommendations;
+
+      // Step 1: Fetch connections for the current user
+      const currentUserConnections = await fetchConnectionsForUser(
+        currentUserId
+      );
+      logData.currentUserConnections = currentUserConnections;
+
+      // Step 2: Loop through each recommended user and fetch their connections
+      for (const user of recommendationsWithImage) {
+        const recommendedUserConnections = await fetchConnectionsForUser(
+          user.id
+        );
+        logData[`recommendedUser_${user.id}`] = recommendedUserConnections;
+
+        // Step 3: Fetch and log the connections of each friend (friend of a recommended user)
+        for (const friendId of recommendedUserConnections) {
+          const friendConnections = await fetchConnectionsForUser(friendId);
+          logData[`friendConnections_${friendId}`] = friendConnections;
+
+          // Step 4: Compare friend connections with current user's connections
+          const matchingConnections = friendConnections.filter((friendConn) =>
+            currentUserConnections.includes(friendConn)
+          );
+
+          // Step 5: Log the matching connections in the desired format
+          if (matchingConnections.length > 0) {
+            const matchingConnectionsIds = matchingConnections.join(", ");
+            logData[`Friends-friends: ${matchingConnectionsIds}`] =
+              matchingConnections;
+            console.log(`Friends-friends: [${matchingConnectionsIds}]`);
+          }
+
+          // Step 6: Check if any recommended user IDs match friend connections and log them
+          for (const user of recommendationsWithImage) {
+            const recommendedUserConnections = await fetchConnectionsForUser(
+              user.id
+            );
+            logData[`recommendedUser_${user.id}`] = recommendedUserConnections;
+
+            // Step 7: Check friend connections for matches with current user's recommendations
+            for (const friendId of recommendedUserConnections) {
+              const friendConnections = await fetchConnectionsForUser(friendId);
+              logData[`friendConnections_${friendId}`] = friendConnections;
+
+              // Step 8: Compare recommended users with friend connections
+              const friendFriendMatches = friendConnections.filter(
+                (friendConn) => recommendations.includes(friendConn)
+              );
+
+              // Step 9: Filter out the current user's ID from the matched friends
+              const filteredFriendFriendMatches = friendFriendMatches.filter(
+                (match) => match !== currentUserId
+              );
+
+              // Log matches if there are any after filtering out the currentUserId
+              if (filteredFriendFriendMatches.length > 0) {
+                const friendFriendMatchIds =
+                  filteredFriendFriendMatches.join(", ");
+                setFriendFriendMatches(friendFriendMatchIds);
+
+                // logData[`Friend-friend matched: ${friendFriendMatchIds}`] =
+                //   filteredFriendFriendMatches;
+                console.log(`Friend-friend matched: [${friendFriendMatchIds}]`);
+                // ;
+              }
+            }
+          }
+        }
+      }
+
+      // Final consolidated log
+      console.log("All Connections and Matching Data:", logData);
+    } catch (error) {}
+  };
+  if (recommendations.length > 0) {
+    fetchConnectionsForRecommendations();
+  }
 
   const getConnections = async (currentUserId) => {
     try {
@@ -335,8 +452,8 @@ function RecommendationsMain({ currentUserId }) {
   };
   useEffect(() => {
     if (recommendationsWithDetails.length > 0 && currentUserId) {
-      console.log("Recommendations:", recommendationsWithDetails);
-      console.log("Current User ID:", currentUserId);
+      // console.log("Recommendations:", recommendationsWithDetails);
+      // console.log("Current User ID:", currentUserId);
       const matches = findMatches(currentUserId, recommendationsWithDetails);
       setMatchedUserIds(matches);
     }
@@ -447,6 +564,26 @@ function RecommendationsMain({ currentUserId }) {
       getConnections(currentUserId);
     }
   }, [currentUserId]);
+
+  useEffect(() => {
+    if (recommendationsWithImage.length > 0 && friendFriendMatches.length > 0) {
+      // Update user score based on friend-friend matches
+      const updatedRecommendationsWithScore = recommendationsWithImage.map(
+        (user) => {
+          const isFriendFriendMatch = friendFriendMatches.includes(user.id);
+
+          // If it's a friend-friend match, add an additional point to the score
+          const updatedScore = isFriendFriendMatch
+            ? Math.min(user.score + 1, 5)
+            : user.score;
+
+          return { ...user, score: updatedScore };
+        }
+      );
+
+      setRecommendationsWithImage(updatedRecommendationsWithScore);
+    }
+  }, [friendFriendMatches]);
 
   return (
     <Box sx={{ flexGrow: 1, padding: 2 }}>

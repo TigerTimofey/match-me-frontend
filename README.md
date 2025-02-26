@@ -2,7 +2,7 @@
 
 ## About
 
-MatchMe is a modern dating web application that helps people find friends and partners based on common interests, languages, and location.
+MatchMe is a modern dating web application that helps people find friends and partners based on common interests, languages, and location. You also need to use [backend-part](https://github.com/TigerTimofey/match-me-backend-maven).
 
 ## Technologies
 
